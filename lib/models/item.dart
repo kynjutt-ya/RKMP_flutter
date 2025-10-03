@@ -4,6 +4,7 @@ class Item {
   final String description;
   final bool forExchange;
   final String owner;
+  final String? imagePath;
 
   Item({
     required this.id,
@@ -11,5 +12,6 @@ class Item {
     required this.description,
     required this.forExchange,
     required this.owner,
+    this.imagePath,
   });
 }
