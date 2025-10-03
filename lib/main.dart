@@ -57,9 +57,15 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Группа: ИКБО-06-22'),
-            const SizedBox(height: 20),
-            const Text('Студенческий билет: 22И1693'),
+
+            Column(
+              children: [
+                const Text('Группа: ИКБО-06-22'),
+                const SizedBox(height: 10),
+                const Text('Студенческий билет: 22И1693'),
+              ],
+            ),
+
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
