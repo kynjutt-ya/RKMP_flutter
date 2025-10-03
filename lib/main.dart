@@ -48,12 +48,15 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'ФИО: Кугут Юлия Александровна',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontStyle: FontStyle.italic,
-                color: Colors.purpleAccent,
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: const Text(
+                'ФИО: Кугут Юлия Александровна',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.purpleAccent,
+                ),
               ),
             ),
             const SizedBox(height: 20),
