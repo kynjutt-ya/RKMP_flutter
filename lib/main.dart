@@ -67,7 +67,14 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
 
-            SizedBox(height: 20),
+            SizedBox(
+              height: 40,
+              width: double.infinity,
+              child: Container(
+                color: Colors.deepPurple[100],
+              ),
+            ),
+
             ElevatedButton(
               onPressed: () {
                 print('Кнопка нажата');
