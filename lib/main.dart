@@ -59,15 +59,24 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Группа: ИКБО-06-22'),
-                const SizedBox(width: 20),
-                const Text('Студенческий билет: 22И1693'),
-              ],
+            Container(
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.lightGreenAccent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Группа: ИКБО-06-22'),
+                  const SizedBox(width: 20),
+                  const Text('Студенческий билет: 22И1693'),
+                ],
+              ),
             ),
 
             SizedBox(
