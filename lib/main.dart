@@ -60,6 +60,27 @@ class _MyHomePageState extends State<MyHomePage> {
             const Text('Группа: ИКБО-06-22'),
             const SizedBox(height: 20),
             const Text('Студенческий билет: 22И1693'),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                print('Кнопка нажата');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pinkAccent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.star),
+                  SizedBox(width: 8),
+                  Text('Нажми'),
+                ],
+              ),
+            ),
           ],
         ),
       ),
