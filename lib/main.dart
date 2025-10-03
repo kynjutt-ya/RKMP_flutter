@@ -58,10 +58,11 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 20),
 
-            Column(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text('Группа: ИКБО-06-22'),
-                const SizedBox(height: 5),
+                const SizedBox(width: 20),
                 const Text('Студенческий билет: 22И1693'),
               ],
             ),
