@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
       description: 'Набор книг в хорошем состоянии, можно забирать — отдам.',
       forExchange: false,
       owner: 'Анна',
-      imagePath: 'assets/books.png', // локальный asset
+      imagePath: 'assets/books.png',
     ),
     Item(
       id: '2',
@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       description: 'Экран треснул, батарея держит. Можно обменять на наушники.',
       forExchange: true,
       owner: 'Иван',
-      imagePath: 'assets/phone.png', // локальный asset
+      imagePath: 'assets/phone.png',
     ),
   ];
 
