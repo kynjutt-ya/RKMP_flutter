@@ -10,6 +10,6 @@ class MyStatefulWidget extends StatefulWidget {
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   @override
   Widget build(BuildContext context) {
-    return Text('Пример StatefulWidget');
+    return Text('Пример для пр 3 StatefulWidget');
   }
 }
