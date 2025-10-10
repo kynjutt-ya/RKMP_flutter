@@ -78,12 +78,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           style: TextStyle(fontSize: 18, color: Colors.grey),
         ),
       )
-          : Padding(
-        padding: const EdgeInsets.all(8.0),
+          : SingleChildScrollView(
         child: Column(
           children: _items.map((item) {
             return Card(
-              margin: const EdgeInsets.symmetric(vertical: 6),
+              margin: const EdgeInsets.all(8),
               child: ListTile(
                 leading: _buildImage(item.imagePath),
                 title: Text(item.title),
