@@ -60,8 +60,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration:
-                    const InputDecoration(labelText: 'Введите адрес'),
+                    decoration: const InputDecoration(labelText: 'Введите адрес'),
                   ),
                 ),
                 IconButton(
@@ -79,6 +78,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 itemBuilder: (context, i) {
                   final addr = _addresses[i];
                   return ListTile(
+                    key: ValueKey(addr),
+                    leading: const Icon(Icons.home),
                     title: Text(addr),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
