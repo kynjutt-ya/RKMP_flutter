@@ -5,7 +5,13 @@ import '../models/item.dart';
 
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
-  const AddItemScreen({super.key, required this.ownerName});
+  final Function(Item) onAdd; // 🔹 колбэк для добавления в список
+
+  const AddItemScreen({
+    super.key,
+    required this.ownerName,
+    required this.onAdd,
+  });
 
   @override
   State<AddItemScreen> createState() => _AddItemScreenState();
@@ -21,16 +27,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      setState(() {
-        _pickedImage = File(picked.path);
-      });
+      setState(() => _pickedImage = File(picked.path));
     }
   }
 
   void _save() {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите заголовок')),
+        const SnackBar(content: Text('Введите название объявления')),
       );
       return;
     }
@@ -41,10 +45,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
       description: _descCtrl.text.trim(),
       forExchange: _forExchange,
       owner: widget.ownerName,
-      imagePath: _pickedImage?.path, // путь к фото из галереи
+      imagePath: _pickedImage?.path,
     );
 
-    Navigator.of(context).pop(newItem);
+    widget.onAdd(newItem); // 🔹 возвращаем в родительский экран
+    Navigator.pop(context);
   }
 
   @override
@@ -52,40 +57,35 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Добавить объявление')),
       body: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
           child: Column(
             children: [
               TextField(
                 controller: _titleCtrl,
-                decoration: const InputDecoration(labelText: 'Заголовок'),
+                decoration: const InputDecoration(labelText: 'Название'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               TextField(
                 controller: _descCtrl,
                 decoration: const InputDecoration(labelText: 'Описание'),
-                maxLines: 3,
+                maxLines: 2,
               ),
-              const SizedBox(height: 12),
-
-              // превью фото
-              if (_pickedImage != null)
-                Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
-              else
-                Image.asset('assets/placeholder.png',
-                    height: 150, fit: BoxFit.cover),
-
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
+              _pickedImage != null
+                  ? Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
+                  : Image.asset('assets/placeholder.png',
+                  height: 150, fit: BoxFit.cover),
+              const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.photo),
                 label: const Text('Выбрать фото'),
               ),
-
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  const Text('Предлагаю обмен'),
+                  const Text('Обмен'),
                   const Spacer(),
                   Switch(
                     value: _forExchange,
@@ -93,11 +93,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: _save,
                 child: const Text('Сохранить'),
-              )
+              ),
             ],
           ),
         ),

@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/item.dart';
-import 'browse_screen.dart';
-import 'add_item_screen.dart';
-import 'my_listings_screen.dart';
-import 'item_detail_screen.dart';
+import '../../listings/models/item.dart';
+import '../../listings/screens/my_listings_screen.dart';
+import '../../listings/screens/item_detail_screen.dart';
+import '../../categories/screens/categories_screen.dart';
+import '../../addresses/screens/addresses_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,34 +15,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Item> _items = [
-    Item(
-      id: '1',
-      title: 'Книги — Художественная литература',
-      description: 'Набор книг в хорошем состоянии, можно забирать — отдам.',
-      forExchange: false,
-      owner: 'Анна',
-      imagePath: 'assets/books.png',
-    ),
-    Item(
-      id: '2',
-      title: 'Смартфон (на запчасти)',
-      description: 'Экран треснул, батарея держит. Можно обменять на наушники.',
-      forExchange: true,
-      owner: 'Иван',
-      imagePath: 'assets/phone.png',
-    ),
-  ];
+  final List<Item> _allItems = [];
+  final List<Item> _userItems = [];
 
-  void _handleNewItem(Item newItem) {
+  @override
+  void initState() {
+    super.initState();
+    _allItems.addAll([
+      Item(
+        id: '1',
+        title: 'Книги — Художественная литература',
+        description: 'Набор книг в хорошем состоянии, можно забирать — отдам.',
+        forExchange: false,
+        owner: 'Анна',
+        imagePath: 'assets/books.png',
+      ),
+      Item(
+        id: '2',
+        title: 'Смартфон (на запчасти)',
+        description:
+        'Экран треснул, батарея держит. Можно обменять на наушники.',
+        forExchange: true,
+        owner: 'Иван',
+        imagePath: 'assets/phone.png',
+      ),
+    ]);
+  }
+
+  void _handleAdd(Item newItem) {
     setState(() {
-      _items.add(newItem);
+      _allItems.add(newItem);
+      _userItems.add(newItem);
     });
   }
 
   void _handleDelete(String id) {
     setState(() {
-      _items.removeWhere((it) => it.id == id);
+      _allItems.removeWhere((it) => it.id == id);
+      _userItems.removeWhere((it) => it.id == id);
     });
   }
 
@@ -71,64 +82,74 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.teal.shade50,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(
-                children: [
-                  Text('Всего объявлений: ${_items.length}',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final result = await Navigator.of(context).push<Item>(
-                        MaterialPageRoute(
-                          builder: (_) => AddItemScreen(ownerName: 'Вы'),
-                        ),
-                      );
-                      if (result != null) {
-                        _handleNewItem(result);
-                      }
-                    },
-                    child: const Text('Добавить'),
-                  ),
-                ],
+              child: Text(
+                'Всего объявлений: ${_allItems.length}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 16),
+
+            // Навигационные кнопки
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => BrowseScreen(items: _items),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.list),
-                  label: const Text('Просмотреть'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
+                    Navigator.push(
+                      context,
                       MaterialPageRoute(
                         builder: (_) => MyListingsScreen(
-                            items: _items, onDelete: _handleDelete),
+                          myItems: _userItems,
+                          onAdd: _handleAdd,
+                          onDelete: _handleDelete,
+                        ),
                       ),
                     );
                   },
                   icon: const Icon(Icons.person),
                   label: const Text('Мои объявления'),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.category),
+                  label: const Text('Категории'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AddressesScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.location_on),
+                  label: const Text('Адреса'),
+                ),
               ],
             ),
             const SizedBox(height: 16),
+
+            // Список всех объявлений
             Expanded(
-              child: _items.isEmpty
-                  ? const Center(child: Text('Пока нет объявлений'))
+              child: _allItems.isEmpty
+                  ? const Center(
+                child: Text(
+                  'Пока нет объявлений',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              )
                   : ListView.builder(
-                itemCount: _items.length,
+                itemCount: _allItems.length,
                 itemBuilder: (context, i) {
-                  final it = _items[i];
+                  final it = _allItems[i];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     child: InkWell(
@@ -157,15 +178,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 4),
-                                  Text(it.description,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis),
+                                  Text(
+                                    it.description,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
-                                      '${it.forExchange ? "Обмен" : "Отдать"} — ${it.owner}',
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey)),
+                                    '${it.forExchange ? "Обмен" : "Отдать"} — ${it.owner}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

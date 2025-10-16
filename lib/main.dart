@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'shared/app_theme.dart';
+import 'features/home/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,10 +12,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'От соседей',
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-      ),
+      title: 'От соседей — мини-маркетплейс',
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
       home: const HomeScreen(),
     );
   }
