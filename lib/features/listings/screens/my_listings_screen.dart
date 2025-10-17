@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/item.dart';
 import 'add_item_screen.dart';
 
+//Экран оюъявлений пользователя
 class MyListingsScreen extends StatefulWidget {
   final List<Item> myItems;
   final Function(Item) onAdd;
