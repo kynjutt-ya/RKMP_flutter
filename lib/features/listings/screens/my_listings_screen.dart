@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import 'add_item_screen.dart';
+import '../widgets/item_table.dart';
 
-//Экран оюъявлений пользователя
 class MyListingsScreen extends StatefulWidget {
   final List<Item> myItems;
   final Function(Item) onAdd;
@@ -30,28 +30,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   void _addItem(Item item) {
-    setState(() {
-      _items.add(item);
-    });
+    setState(() => _items.add(item));
     widget.onAdd(item);
   }
 
   void _removeItem(String id) {
-    setState(() {
-      _items.removeWhere((i) => i.id == id);
-    });
+    setState(() => _items.removeWhere((i) => i.id == id));
     widget.onDelete(id);
-  }
-
-  Widget _buildImage(String? path) {
-    if (path == null) {
-      return Image.asset('assets/placeholder.png',
-          height: 80, width: 80, fit: BoxFit.cover);
-    }
-    if (path.startsWith('assets/')) {
-      return Image.asset(path, height: 80, width: 80, fit: BoxFit.cover);
-    }
-    return Image.file(File(path), height: 80, width: 80, fit: BoxFit.cover);
   }
 
   @override
@@ -59,8 +44,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Мои объявления')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final newItem = await Navigator.push<Item>(
             context,
             MaterialPageRoute(
               builder: (_) => AddItemScreen(
@@ -69,6 +54,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               ),
             ),
           );
+          if (newItem != null) _addItem(newItem);
         },
         child: const Icon(Icons.add),
       ),
@@ -79,23 +65,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           style: TextStyle(fontSize: 18, color: Colors.grey),
         ),
       )
-          : SingleChildScrollView(
-        child: Column(
-          children: _items.map((item) {
-            return Card(
-              margin: const EdgeInsets.all(8),
-              child: ListTile(
-                leading: _buildImage(item.imagePath),
-                title: Text(item.title),
-                subtitle: Text(item.description),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _removeItem(item.id),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+          : ItemTable(
+        items: _items,
+        onDelete: _removeItem,
       ),
     );
   }
