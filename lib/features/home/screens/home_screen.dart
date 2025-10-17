@@ -6,7 +6,7 @@ import '../../listings/screens/item_detail_screen.dart';
 import '../../categories/screens/categories_screen.dart';
 import '../../addresses/screens/addresses_screen.dart';
 
-
+//Экран ленты новостей
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
