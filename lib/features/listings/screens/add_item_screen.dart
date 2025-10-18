@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/item.dart';
-
+//экран добавления объявлений пользователя
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
-  final Function(Item) onAdd; // 🔹 колбэк для добавления в список
+  final Function(Item) onAdd;
 
   const AddItemScreen({
     super.key,
@@ -48,7 +48,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       imagePath: _pickedImage?.path,
     );
 
-    widget.onAdd(newItem); // 🔹 возвращаем в родительский экран
+    widget.onAdd(newItem);
     Navigator.pop(context);
   }
 
