@@ -32,4 +32,14 @@ class Item {
       imagePath: imagePath ?? this.imagePath,
     );
   }
+  factory Item.empty() {
+    return Item(
+      id: '',
+      title: '',
+      description: '',
+      forExchange: false,
+      owner: '',
+      imagePath: '',
+    );
+  }
 }
