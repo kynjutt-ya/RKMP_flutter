@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AddressesScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class AddressesScreen extends StatefulWidget {
 class _AddressesScreenState extends State<AddressesScreen> {
   final List<String> _addresses = [];
   final _controller = TextEditingController();
+  final String _bannerUrl = 'https://adindex.ru/assets/seo/2022_04/facebook_303784.jpg?ts=1649751555';
 
   @override
   void initState() {
@@ -20,30 +22,25 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
   Future<void> _loadAddresses() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _addresses.addAll(prefs.getStringList('addresses') ?? []);
-    });
+    _addresses.addAll(prefs.getStringList('addresses') ?? []);
+    setState(() {});
   }
 
   Future<void> _saveAddresses() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('addresses', _addresses);
+    await prefs.setStringList('addresses', _addresses);
   }
 
   void _addAddress() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    setState(() {
-      _addresses.add(text);
-    });
+    setState(() => _addresses.add(text));
     _controller.clear();
     _saveAddresses();
   }
 
   void _removeAddress(String address) {
-    setState(() {
-      _addresses.remove(address);
-    });
+    setState(() => _addresses.remove(address));
     _saveAddresses();
   }
 
@@ -51,11 +48,21 @@ class _AddressesScreenState extends State<AddressesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Мои адреса поиска')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
+      body: Column(
+        children: [
+          CachedNetworkImage(
+            imageUrl: _bannerUrl,
+            height: 160,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            progressIndicatorBuilder: (context, url, progress) =>
+            const Center(child: CircularProgressIndicator()),
+            errorWidget: (context, url, error) =>
+            const Center(child: Icon(Icons.error, color: Colors.red)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
                 Expanded(
                   child: TextField(
@@ -63,34 +70,25 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     decoration: const InputDecoration(labelText: 'Введите адрес'),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addAddress,
-                ),
+                IconButton(icon: const Icon(Icons.add), onPressed: _addAddress),
               ],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: _addresses.isEmpty
-                  ? const Center(child: Text('Адресов пока нет'))
-                  : ListView.builder(
-                itemCount: _addresses.length,
-                itemBuilder: (context, i) {
-                  final addr = _addresses[i];
-                  return ListTile(
-                    key: ValueKey(addr),
-                    leading: const Icon(Icons.home),
-                    title: Text(addr),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _removeAddress(addr),
-                    ),
-                  );
-                },
+          ),
+          Expanded(
+            child: _addresses.isEmpty
+                ? const Center(child: Text('Адресов пока нет'))
+                : ListView.builder(
+              itemCount: _addresses.length,
+              itemBuilder: (context, i) => ListTile(
+                title: Text(_addresses[i]),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _removeAddress(_addresses[i]),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
