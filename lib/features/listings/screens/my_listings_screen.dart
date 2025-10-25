@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import 'add_item_screen.dart';
@@ -48,10 +47,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           final newItem = await Navigator.push<Item>(
             context,
             MaterialPageRoute(
-              builder: (_) => AddItemScreen(
-                ownerName: 'Вы',
-                onAdd: _addItem,
-              ),
+              builder: (_) => AddItemScreen(ownerName: 'Вы', onAdd: _addItem),
             ),
           );
           if (newItem != null) _addItem(newItem);
@@ -65,10 +61,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           style: TextStyle(fontSize: 18, color: Colors.grey),
         ),
       )
-          : ItemTable(
-        items: _items,
-        onDelete: _removeItem,
-      ),
+          : ItemTable(items: _items, onDelete: _removeItem),
     );
   }
 }
