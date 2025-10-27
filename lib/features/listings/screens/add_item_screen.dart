@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/item.dart';
-//экран добавления объявлений пользователя
+
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
   final Function(Item) onAdd;
@@ -48,8 +48,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       imagePath: _pickedImage?.path,
     );
 
-    widget.onAdd(newItem);
-    Navigator.pop(context);
+    widget.onAdd(newItem); // <--- ВАЖНО: вызывает функцию из родителя, которая обновляет состояние в main.dart
+    Navigator.of(context).pop(newItem);
   }
 
   @override
@@ -65,38 +65,47 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 controller: _titleCtrl,
                 decoration: const InputDecoration(labelText: 'Название'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _descCtrl,
                 decoration: const InputDecoration(labelText: 'Описание'),
-                maxLines: 2,
+                maxLines: 3,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               _pickedImage != null
-                  ? Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
-                  : Image.asset('assets/placeholder.png',
-                  height: 150, fit: BoxFit.cover),
-              const SizedBox(height: 10),
+                  ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(_pickedImage!, height: 150, fit: BoxFit.cover),
+              )
+                  : ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/placeholder.png', height: 150, fit: BoxFit.cover),
+              ),
+              const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.photo),
                 label: const Text('Выбрать фото'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Обмен'),
+                  const Text('Обмен', style: TextStyle(fontSize: 16)),
                   const Spacer(),
                   Switch(
                     value: _forExchange,
                     onChanged: (v) => setState(() => _forExchange = v),
+                    activeColor: Colors.teal,
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _save,
-                child: const Text('Сохранить'),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: const Text('Сохранить'),
+                ),
               ),
             ],
           ),
