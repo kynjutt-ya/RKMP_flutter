@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'shared/app_theme.dart';
-import 'features/listings/state/home_container.dart';
+import 'features/listings/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'От соседей — мини-маркетплейс',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const HomeContainer(),
+      home: const HomeScreen(),
     );
   }
 }

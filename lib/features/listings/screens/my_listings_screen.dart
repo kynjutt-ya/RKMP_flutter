@@ -1,41 +1,38 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import 'add_item_screen.dart';
-import '../widgets/item_table.dart';
+import 'home_screen.dart'; // ← из того же каталога
+import '../../categories/screens/categories_screen.dart';
+import '../../addresses/screens/addresses_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
-  final List<Item> myItems;
-  final Function(Item) onAdd;
-  final Function(String) onDelete;
-
-  const MyListingsScreen({
-    super.key,
-    required this.myItems,
-    required this.onAdd,
-    required this.onDelete,
-  });
+  const MyListingsScreen({super.key});
 
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
-  late List<Item> _items;
-
-  @override
-  void initState() {
-    super.initState();
-    _items = List.from(widget.myItems);
-  }
+  final List<Item> _items = [];
 
   void _addItem(Item item) {
     setState(() => _items.add(item));
-    widget.onAdd(item);
   }
 
-  void _removeItem(String id) {
-    setState(() => _items.removeWhere((i) => i.id == id));
-    widget.onDelete(id);
+  void _navigateTo(int index) {
+    if (index == 1) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) {
+        switch (index) {
+          case 0: return const HomeScreen();
+          case 2: return const CategoriesScreen();
+          case 3: return const AddressesScreen();
+          case 4: return const ProfileScreen();
+          default: return const MyListingsScreen();
+        }
+      }),
+    );
   }
 
   @override
@@ -44,10 +41,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       appBar: AppBar(title: const Text('Мои объявления')),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final newItem = await Navigator.push<Item>(
-            context,
+          final newItem = await Navigator.of(context).push<Item>(
             MaterialPageRoute(
-              builder: (_) => AddItemScreen(ownerName: 'Вы', onAdd: _addItem),
+              builder: (context) => AddItemScreen(ownerName: 'Вы', onAdd: _addItem),
             ),
           );
           if (newItem != null) _addItem(newItem);
@@ -55,13 +51,32 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         child: const Icon(Icons.add),
       ),
       body: _items.isEmpty
-          ? const Center(
-        child: Text(
-          'У вас пока нет объявлений',
-          style: TextStyle(fontSize: 18, color: Colors.grey),
+          ? const Center(child: Text('У вас пока нет объявлений'))
+          : ListView.builder(
+        itemCount: _items.length,
+        itemBuilder: (context, i) => ListTile(
+          title: Text(_items[i].title),
+          subtitle: Text(_items[i].description),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => setState(() => _items.removeAt(i)),
+          ),
         ),
-      )
-          : ItemTable(items: _items, onDelete: _removeItem),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        onTap: _navigateTo,
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Мои'),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
+          BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Адреса'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
+        ],
+      ),
     );
   }
 }

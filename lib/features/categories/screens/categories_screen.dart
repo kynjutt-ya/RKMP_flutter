@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Импорты для навигации
+import '../../listings/screens/home_screen.dart';
+import '../../listings/screens/my_listings_screen.dart';
+import '../../addresses/screens/addresses_screen.dart';
+import '../../profile/screens/profile_screen.dart';
+
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 
@@ -12,7 +18,6 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final List<String> _categories = [];
   final _controller = TextEditingController();
-
   final String _bannerUrl = 'https://avatars.dzeninfra.ru/get-zen_doc/4162493/pub_63d2584ca2e35520b450a5ef_63d25857f342be623847d0dc/scale_1200';
 
   @override
@@ -43,6 +48,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void _removeCategory(String cat) {
     setState(() => _categories.remove(cat));
     _saveCategories();
+  }
+
+  void _navigateTo(int index) {
+    if (index == 2) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) {
+        switch (index) {
+          case 0: return HomeScreen();
+          case 1: return MyListingsScreen();
+          case 3: return AddressesScreen();
+          case 4: return ProfileScreen();
+          default: return CategoriesScreen();
+        }
+      }),
+    );
   }
 
   @override
@@ -92,6 +112,20 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ),
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        onTap: _navigateTo,
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Мои'),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
+          BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Адреса'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
         ],
       ),
     );

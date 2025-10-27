@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Импорты для навигации
+import '../../listings/screens/home_screen.dart';
+import '../../listings/screens/my_listings_screen.dart';
+import '../../categories/screens/categories_screen.dart';
+import '../../profile/screens/profile_screen.dart';
+
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
 
@@ -42,6 +48,21 @@ class _AddressesScreenState extends State<AddressesScreen> {
   void _removeAddress(String address) {
     setState(() => _addresses.remove(address));
     _saveAddresses();
+  }
+
+  void _navigateTo(int index) {
+    if (index == 3) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) {
+        switch (index) {
+          case 0: return HomeScreen();
+          case 1: return MyListingsScreen();
+          case 2: return CategoriesScreen();
+          case 4: return ProfileScreen();
+          default: return AddressesScreen();
+        }
+      }),
+    );
   }
 
   @override
@@ -88,6 +109,20 @@ class _AddressesScreenState extends State<AddressesScreen> {
               ),
             ),
           ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 3,
+        onTap: _navigateTo,
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Мои'),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
+          BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Адреса'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
         ],
       ),
     );

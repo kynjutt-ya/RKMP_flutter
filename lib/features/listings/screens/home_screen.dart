@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/item.dart';
-import '../screens/my_listings_screen.dart';
+import '../widgets/item_table.dart'; // ← подключаем ItemTable
+import 'item_detail_screen.dart';
+import 'my_listings_screen.dart';
 import '../../categories/screens/categories_screen.dart';
 import '../../addresses/screens/addresses_screen.dart';
-import '../widgets/item_table.dart';
-import '../screens/item_detail_screen.dart';
 import '../../profile/screens/profile_screen.dart';
-import 'dart:math';
 
-class HomeContainer extends StatefulWidget {
-  const HomeContainer({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomeContainer> createState() => _HomeContainerState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeContainerState extends State<HomeContainer> {
+class _HomeScreenState extends State<HomeScreen> {
   final List<Item> _allItems = [];
-  final List<Item> _userItems = [];
-  Item? _recentlyDeleted;
-
-  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -74,82 +69,19 @@ class _HomeContainerState extends State<HomeContainer> {
     ]);
   }
 
-  // --- Методы управления ---
-  void _addMyItem(Item item) {
-    setState(() {
-      _userItems.add(item);
-      _allItems.add(item);
-    });
-  }
-
-  void _removeMyItem(String id) {
-    final item = _allItems.firstWhere((it) => it.id == id, orElse: () => Item.empty());
-    if (item.id.isEmpty) return;
-
-    setState(() {
-      _recentlyDeleted = item;
-      _userItems.removeWhere((it) => it.id == id);
-      _allItems.removeWhere((it) => it.id == id);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Объявление удалено'),
-        action: SnackBarAction(
-          label: 'Отменить',
-          onPressed: _undoRemove,
-        ),
-      ),
+  void _navigateTo(int index) {
+    if (index == 0) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) {
+        switch (index) {
+          case 1: return MyListingsScreen();
+          case 2: return const CategoriesScreen();
+          case 3: return const AddressesScreen();
+          case 4: return const ProfileScreen();
+          default: return const HomeScreen();
+        }
+      }),
     );
-  }
-
-  void _undoRemove() {
-    if (_recentlyDeleted == null) return;
-    setState(() {
-      _userItems.add(_recentlyDeleted!);
-      _allItems.add(_recentlyDeleted!);
-      _recentlyDeleted = null;
-    });
-  }
-
-  // --- Навигация между вкладками ---
-  void _onTabTapped(int index) {
-    setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MyListingsScreen(
-              myItems: _userItems,
-              onAdd: _addMyItem,
-              onDelete: _removeMyItem,
-            ),
-          ),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CategoriesScreen()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddressesScreen()),
-        );
-        break;
-      case 4:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-        );
-        break;
-    }
   }
 
   @override
@@ -157,10 +89,7 @@ class _HomeContainerState extends State<HomeContainer> {
     const bannerUrl = 'https://avatars.mds.yandex.net/i?id=35a7ecfd8db436726cbcd80a3bc2b439dfb2708f-10555242-images-thumbs&ref=rim&n=33&w=480&h=224';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Объявления соседей'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Объявления соседей'), centerTitle: true),
       body: Column(
         children: [
           CachedNetworkImage(
@@ -175,17 +104,12 @@ class _HomeContainerState extends State<HomeContainer> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _allItems.isEmpty
-                ? const Center(
-              child: Text('Пока нет объявлений'),
-            )
-                : ItemTable(
+            child: ItemTable(
               items: _allItems,
               onTap: (item) {
-                Navigator.push(
-                  context,
+                Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => ItemDetailScreen(item: item),
+                    builder: (context) => ItemDetailScreen(item: item),
                   ),
                 );
               },
@@ -194,9 +118,9 @@ class _HomeContainerState extends State<HomeContainer> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        selectedItemColor: Colors.blueAccent,
+        currentIndex: 0,
+        onTap: _navigateTo,
+        selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
