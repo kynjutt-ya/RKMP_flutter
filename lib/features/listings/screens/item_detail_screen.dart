@@ -10,7 +10,12 @@ class ItemDetailScreen extends StatelessWidget {
 
   Widget _buildImage(String? path) {
     if (path == null) {
-      return Image.asset('assets/placeholder.png', width: double.infinity, height: 200, fit: BoxFit.cover);
+      return Image.asset('assets/placeholder.png',
+          width: double.infinity, height: 200, fit: BoxFit.cover);
+    }
+    if (path.startsWith('assets/')) {
+      return Image.asset(path,
+          width: double.infinity, height: 200, fit: BoxFit.cover);
     }
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return CachedNetworkImage(
@@ -24,10 +29,8 @@ class ItemDetailScreen extends StatelessWidget {
         const Center(child: Icon(Icons.error, color: Colors.red)),
       );
     }
-    if (path.startsWith('assets/')) {
-      return Image.asset(path, width: double.infinity, height: 200, fit: BoxFit.cover);
-    }
-    return Image.asset('assets/placeholder.png', width: double.infinity, height: 200, fit: BoxFit.cover);
+    return Image.file(File(path),
+        width: double.infinity, height: 200, fit: BoxFit.cover);
   }
 
   @override
@@ -35,15 +38,9 @@ class ItemDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(item.title),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -51,23 +48,22 @@ class ItemDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: _buildImage(item.imagePath),
             ),
-            const SizedBox(height: 16),
-            Text(item.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('Владелец: ${item.owner}', style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 12),
-            Text(item.description, style: const TextStyle(fontSize: 16, height: 1.4)),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Запрос на "${item.title}" отправлен')),
-                  );
-                },
-                child: Text(item.forExchange ? 'Предложить обмен' : 'Запросить'),
-              ),
+            Text(item.title,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Владелец: ${item.owner}'),
+            const SizedBox(height: 8),
+            Text(item.description),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Запрос на "${item.title}" отправлен')),
+                );
+              },
+              child: Text(item.forExchange ? 'Предложить обмен' : 'Запросить'),
             ),
           ],
         ),

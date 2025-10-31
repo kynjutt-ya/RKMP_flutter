@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/item.dart';
+import 'package:go_router/go_router.dart';
 
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
@@ -31,7 +32,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  void _save() {
+  void _save() async {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название объявления')),
@@ -47,9 +48,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
       owner: widget.ownerName,
       imagePath: _pickedImage?.path,
     );
+    widget.onAdd(newItem);
 
-    widget.onAdd(newItem); // <--- ВАЖНО: вызывает функцию из родителя, которая обновляет состояние в main.dart
-    Navigator.of(context).pop(newItem);
+    context.pop(newItem);
   }
 
   @override
@@ -65,47 +66,38 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 controller: _titleCtrl,
                 decoration: const InputDecoration(labelText: 'Название'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               TextField(
                 controller: _descCtrl,
                 decoration: const InputDecoration(labelText: 'Описание'),
-                maxLines: 3,
+                maxLines: 2,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _pickedImage != null
-                  ? ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(_pickedImage!, height: 150, fit: BoxFit.cover),
-              )
-                  : ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset('assets/placeholder.png', height: 150, fit: BoxFit.cover),
-              ),
-              const SizedBox(height: 12),
+                  ? Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
+                  : Image.asset('assets/placeholder.png',
+                  height: 150, fit: BoxFit.cover),
+              const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.photo),
                 label: const Text('Выбрать фото'),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  const Text('Обмен', style: TextStyle(fontSize: 16)),
+                  const Text('Обмен'),
                   const Spacer(),
                   Switch(
                     value: _forExchange,
                     onChanged: (v) => setState(() => _forExchange = v),
-                    activeColor: Colors.teal,
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _save,
-                  child: const Text('Сохранить'),
-                ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _save,
+                child: const Text('Сохранить'),
               ),
             ],
           ),

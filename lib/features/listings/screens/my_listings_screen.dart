@@ -1,73 +1,76 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import 'add_item_screen.dart';
-import 'home_screen.dart'; // ← из того же каталога
-import '../../categories/screens/categories_screen.dart';
-import '../../addresses/screens/addresses_screen.dart';
-import '../../profile/screens/profile_screen.dart';
+import '../widgets/item_table.dart';
+import 'package:go_router/go_router.dart';
 
 class MyListingsScreen extends StatefulWidget {
-  const MyListingsScreen({super.key});
+  final List<Item> myItems;
+  final Function(Item) onAdd;
+  final Function(String) onDelete;
+
+  const MyListingsScreen({
+    super.key,
+    required this.myItems,
+    required this.onAdd,
+    required this.onDelete,
+  });
 
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
-  final List<Item> _items = [];
+  int _currentIndex = 1;
 
   void _addItem(Item item) {
-    setState(() => _items.add(item));
+    widget.onAdd(item);
+  }
+
+  void _removeItem(String id) {
+    widget.onDelete(id);
   }
 
   void _navigateTo(int index) {
-    if (index == 1) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) {
-        switch (index) {
-          case 0: return const HomeScreen();
-          case 2: return const CategoriesScreen();
-          case 3: return const AddressesScreen();
-          case 4: return const ProfileScreen();
-          default: return const MyListingsScreen();
-        }
-      }),
-    );
+    if (index == _currentIndex) return;
+    setState(() => _currentIndex = index);
+    String location;
+    switch (index) {
+      case 0: location = '/'; break;
+      case 1: location = '/my'; break;
+      case 2: location = '/categories'; break;
+      case 3: location = '/addresses'; break;
+      case 4: location = '/profile'; break;
+      default: location = '/my'; break;
+    }
+    context.go(location);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Мои объявления')),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final newItem = await Navigator.of(context).push<Item>(
-            MaterialPageRoute(
-              builder: (context) => AddItemScreen(ownerName: 'Вы', onAdd: _addItem),
-            ),
-          );
-          if (newItem != null) _addItem(newItem);
+          await context.push('/my/add');
         },
         child: const Icon(Icons.add),
       ),
-      body: _items.isEmpty
-          ? const Center(child: Text('У вас пока нет объявлений'))
-          : ListView.builder(
-        itemCount: _items.length,
-        itemBuilder: (context, i) => ListTile(
-          title: Text(_items[i].title),
-          subtitle: Text(_items[i].description),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => setState(() => _items.removeAt(i)),
-          ),
-        ),
+      body: widget.myItems.isEmpty
+          ? const Center(
+        child: Text('У вас пока нет объявлений', style: TextStyle(color: Colors.grey)),
+      )
+          : ItemTable(
+        items: widget.myItems,
+        onDelete: _removeItem,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
+        currentIndex: _currentIndex,
         onTap: _navigateTo,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: theme.primaryColor,
+        unselectedItemColor: theme.unselectedWidgetColor,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
