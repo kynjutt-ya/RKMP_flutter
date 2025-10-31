@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// Импорты для навигации
-import '../../listings/screens/home_screen.dart';
-import '../../listings/screens/my_listings_screen.dart';
-import '../../categories/screens/categories_screen.dart';
-import '../../profile/screens/profile_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
@@ -51,22 +46,22 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   void _navigateTo(int index) {
-    if (index == 3) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) {
-        switch (index) {
-          case 0: return HomeScreen();
-          case 1: return MyListingsScreen();
-          case 2: return CategoriesScreen();
-          case 4: return ProfileScreen();
-          default: return AddressesScreen();
-        }
-      }),
-    );
+    String location;
+    switch (index) {
+      case 0: location = '/'; break;
+      case 1: location = '/my'; break;
+      case 2: location = '/categories'; break;
+      case 3: location = '/addresses'; break;
+      case 4: location = '/profile'; break;
+      default: location = '/addresses'; break;
+    }
+    context.go(location);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Мои адреса поиска')),
       body: Column(
@@ -114,8 +109,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3,
         onTap: _navigateTo,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: theme.primaryColor,
+        unselectedItemColor: theme.unselectedWidgetColor,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
