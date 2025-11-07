@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:go_router/go_router.dart';
 
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
@@ -45,25 +44,17 @@ class _AddressesScreenState extends State<AddressesScreen> {
     _saveAddresses();
   }
 
-  void _navigateTo(int index) {
-    String location;
-    switch (index) {
-      case 0: location = '/'; break;
-      case 1: location = '/my'; break;
-      case 2: location = '/categories'; break;
-      case 3: location = '/addresses'; break;
-      case 4: location = '/profile'; break;
-      default: location = '/addresses'; break;
-    }
-    context.go(location);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Мои адреса поиска')),
+      appBar: AppBar(
+        title: const Text('Мои адреса поиска'),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Column(
         children: [
           CachedNetworkImage(
@@ -104,20 +95,6 @@ class _AddressesScreenState extends State<AddressesScreen> {
               ),
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
-        onTap: _navigateTo,
-        selectedItemColor: theme.primaryColor,
-        unselectedItemColor: theme.unselectedWidgetColor,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Мои'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
-          BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'Адреса'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Профиль'),
         ],
       ),
     );

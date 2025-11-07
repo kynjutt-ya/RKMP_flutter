@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/item.dart';
 
 class ItemDetailScreen extends StatelessWidget {
@@ -10,27 +9,15 @@ class ItemDetailScreen extends StatelessWidget {
 
   Widget _buildImage(String? path) {
     if (path == null) {
-      return Image.asset('assets/placeholder.png',
-          width: double.infinity, height: 200, fit: BoxFit.cover);
+      return Image.asset('assets/placeholder.png', width: double.infinity, height: 200, fit: BoxFit.cover);
     }
     if (path.startsWith('assets/')) {
-      return Image.asset(path,
-          width: double.infinity, height: 200, fit: BoxFit.cover);
+      return Image.asset(path, width: double.infinity, height: 200, fit: BoxFit.cover);
     }
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      return CachedNetworkImage(
-        imageUrl: path,
-        width: double.infinity,
-        height: 200,
-        fit: BoxFit.cover,
-        progressIndicatorBuilder: (context, url, progress) =>
-        const Center(child: CircularProgressIndicator()),
-        errorWidget: (context, url, error) =>
-        const Center(child: Icon(Icons.error, color: Colors.red)),
-      );
+      return Image.network(path, width: double.infinity, height: 200, fit: BoxFit.cover);
     }
-    return Image.file(File(path),
-        width: double.infinity, height: 200, fit: BoxFit.cover);
+    return Image.file(File(path), width: double.infinity, height: 200, fit: BoxFit.cover);
   }
 
   @override
@@ -38,6 +25,11 @@ class ItemDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(item.title),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
@@ -49,9 +41,7 @@ class ItemDetailScreen extends StatelessWidget {
               child: _buildImage(item.imagePath),
             ),
             const SizedBox(height: 12),
-            Text(item.title,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(item.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Владелец: ${item.owner}'),
             const SizedBox(height: 8),

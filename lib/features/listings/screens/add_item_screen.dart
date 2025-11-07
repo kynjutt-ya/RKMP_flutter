@@ -2,16 +2,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/item.dart';
-import 'package:go_router/go_router.dart';
+import 'my_listings_screen.dart';
 
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
-  final Function(Item) onAdd;
+  final List<Item> myItems;
+  final Function(List<Item>) onUpdateMyItems;
 
   const AddItemScreen({
     super.key,
     required this.ownerName,
-    required this.onAdd,
+    required this.myItems,
+    required this.onUpdateMyItems,
   });
 
   @override
@@ -32,7 +34,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  void _save() async {
+  void _save() {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название объявления')),
@@ -48,15 +50,33 @@ class _AddItemScreenState extends State<AddItemScreen> {
       owner: widget.ownerName,
       imagePath: _pickedImage?.path,
     );
-    widget.onAdd(newItem);
 
-    context.pop(newItem);
+    final updatedItems = List<Item>.from(widget.myItems)..add(newItem);
+    widget.onUpdateMyItems(updatedItems);
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => MyListingsScreen(
+          myItems: updatedItems,
+          onAdd: (item) {},
+          onDelete: (id) {},
+          onUpdateMyItems: widget.onUpdateMyItems,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Добавить объявление')),
+      appBar: AppBar(
+        title: const Text('Добавить объявление'),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -75,8 +95,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               const SizedBox(height: 10),
               _pickedImage != null
                   ? Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
-                  : Image.asset('assets/placeholder.png',
-                  height: 150, fit: BoxFit.cover),
+                  : Image.asset('assets/placeholder.png', height: 150, fit: BoxFit.cover),
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickImage,
