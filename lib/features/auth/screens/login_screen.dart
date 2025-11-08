@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../listings/screens/home_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,14 +12,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  void _login() {
+  void _login(BuildContext context) {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
     if (email == 'test@mail.ru' && password == '12345') {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      context.go('/');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Неверный логин или пароль')),
@@ -30,7 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Вход в аккаунт')),
+      appBar: AppBar(
+        title: const Text('Вход в аккаунт'),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _login,
+              onPressed: () => _login(context),
               child: const Text('Войти'),
             ),
           ],

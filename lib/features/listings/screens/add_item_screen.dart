@@ -1,19 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import '../models/item.dart';
-import 'my_listings_screen.dart';
 
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
   final List<Item> myItems;
-  final Function(List<Item>) onUpdateMyItems;
+  final Function(Item) onAddItem;
 
   const AddItemScreen({
     super.key,
     required this.ownerName,
     required this.myItems,
-    required this.onUpdateMyItems,
+    required this.onAddItem,
   });
 
   @override
@@ -34,7 +34,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  void _save() {
+  void _save(BuildContext context) {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название объявления')),
@@ -51,19 +51,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       imagePath: _pickedImage?.path,
     );
 
-    final updatedItems = List<Item>.from(widget.myItems)..add(newItem);
-    widget.onUpdateMyItems(updatedItems);
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => MyListingsScreen(
-          myItems: updatedItems,
-          onAdd: (item) {},
-          onDelete: (id) {},
-          onUpdateMyItems: widget.onUpdateMyItems,
-        ),
-      ),
-    );
+    widget.onAddItem(newItem);
+    context.go('/my');
   }
 
   @override
@@ -74,7 +63,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Padding(
@@ -115,7 +104,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _save,
+                onPressed: () => _save(context),
                 child: const Text('Сохранить'),
               ),
             ],

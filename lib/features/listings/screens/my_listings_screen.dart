@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/item.dart';
-import 'add_item_screen.dart';
 import '../widgets/item_table.dart';
 
-class MyListingsScreen extends StatefulWidget {
+class MyListingsScreen extends StatelessWidget {
   final List<Item> myItems;
-  final Function(Item) onAdd;
-  final Function(String) onDelete;
-  final Function(List<Item>) onUpdateMyItems;
+  final Function(Item) onAddItem;
+  final Function(String) onDeleteItem;
 
   const MyListingsScreen({
     super.key,
     required this.myItems,
-    required this.onAdd,
-    required this.onDelete,
-    required this.onUpdateMyItems,
+    required this.onAddItem,
+    required this.onDeleteItem,
   });
 
-  @override
-  State<MyListingsScreen> createState() => _MyListingsScreenState();
-}
-
-class _MyListingsScreenState extends State<MyListingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,26 +23,16 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => AddItemScreen(
-                ownerName: 'Вы',
-                myItems: widget.myItems,
-                onUpdateMyItems: widget.onUpdateMyItems,
-              ),
-            ),
-          );
-        },
+        onPressed: () => context.push('/my/add'),
         child: const Icon(Icons.add),
       ),
-      body: widget.myItems.isEmpty
+      body: myItems.isEmpty
           ? const Center(child: Text('У вас пока нет объявлений'))
-          : ItemTable(items: widget.myItems, onDelete: widget.onDelete),
+          : ItemTable(items: myItems, onDelete: onDeleteItem),
     );
   }
 }
