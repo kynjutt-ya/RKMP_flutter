@@ -5,30 +5,43 @@ import '../models/item.dart';
 import '../widgets/item_table.dart';
 
 class MyListingsScreen extends StatefulWidget {
-  final Function(Item) onAddItem;
-  final Function(String) onDeleteItem;
-
-  const MyListingsScreen({super.key, required this.onAddItem, required this.onDeleteItem});
+  const MyListingsScreen({super.key});
 
   @override
   State<MyListingsScreen> createState() => _MyListingsScreenState();
 }
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
-  late final AppStateService _service;
   late List<Item> _items;
 
   @override
   void initState() {
     super.initState();
-    _service = locator<AppStateService>();
-    _items = List.from(_service.userItems);
+    _loadData();
+  }
+
+  void _loadData() {
+    if (locator.isRegistered<AppStateService>()) {
+      final appStateService = locator.get<AppStateService>();
+      _items = List.from(appStateService.userItems);
+    } else {
+      print('Ошибка: AppStateService не зарегистрирован в GetIt!');
+      _items = [];
+    }
   }
 
   void _refresh() {
     setState(() {
-      _items = List.from(_service.userItems);
+      _loadData();
     });
+  }
+
+  void _deleteItem(String id) {
+    if (locator.isRegistered<AppStateService>()) {
+      final appStateService = locator.get<AppStateService>();
+      appStateService.removeItem(id);
+      _refresh();
+    }
   }
 
   @override
@@ -36,7 +49,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Мои объявления'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/my/add').then((_) => _refresh()),
@@ -46,10 +62,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ? const Center(child: Text('У вас пока нет объявлений'))
           : ItemTable(
         items: _items,
-        onDelete: (id) {
-          widget.onDeleteItem(id);
-          _refresh();
-        },
+        onDelete: (id) => _deleteItem(id),
         onTap: (it) => context.push('/item/${it.id}'),
       ),
     );
