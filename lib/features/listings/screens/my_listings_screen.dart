@@ -1,48 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../service_locator.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/listings_cubit.dart';
 import '../models/item.dart';
 import '../widgets/item_table.dart';
+import 'add_item_screen.dart';
 
-class MyListingsScreen extends StatefulWidget {
+class MyListingsScreen extends StatelessWidget {
   const MyListingsScreen({super.key});
-
-  @override
-  State<MyListingsScreen> createState() => _MyListingsScreenState();
-}
-
-class _MyListingsScreenState extends State<MyListingsScreen> {
-  late List<Item> _items;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  void _loadData() {
-    if (locator.isRegistered<AppStateService>()) {
-      final appStateService = locator.get<AppStateService>();
-      _items = List.from(appStateService.userItems);
-    } else {
-      print('Ошибка: AppStateService не зарегистрирован в GetIt!');
-      _items = [];
-    }
-  }
-
-  void _refresh() {
-    setState(() {
-      _loadData();
-    });
-  }
-
-  void _deleteItem(String id) {
-    if (locator.isRegistered<AppStateService>()) {
-      final appStateService = locator.get<AppStateService>();
-      appStateService.removeItem(id);
-      _refresh();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,19 +15,30 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         title: const Text('Мои объявления'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/my/add').then((_) => _refresh()),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddItemScreen(ownerName: 'Вы')),
+        ).then((newItem) {
+          if (newItem != null) {
+            context.read<ListingsCubit>().addListing(newItem);
+          }
+        }),
         child: const Icon(Icons.add),
       ),
-      body: _items.isEmpty
-          ? const Center(child: Text('У вас пока нет объявлений'))
-          : ItemTable(
-        items: _items,
-        onDelete: (id) => _deleteItem(id),
-        onTap: (it) => context.push('/item/${it.id}'),
+      body: BlocBuilder<ListingsCubit, ListingsState>(
+        builder: (context, state) {
+          final myItems = state.myItems;
+          return myItems.isEmpty
+              ? const Center(child: Text('У вас пока нет объявлений'))
+              : ItemTable(
+            items: myItems,
+            onDelete: (id) => context.read<ListingsCubit>().removeListing(id),
+          );
+        },
       ),
     );
   }
