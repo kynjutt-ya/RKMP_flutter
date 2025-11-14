@@ -32,6 +32,7 @@ class Item {
       imagePath: imagePath ?? this.imagePath,
     );
   }
+
   factory Item.empty() {
     return Item(
       id: '',

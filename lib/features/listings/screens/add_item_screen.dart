@@ -1,15 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
 import '../models/item.dart';
-import '../../../service_locator.dart';
 
 class AddItemScreen extends StatefulWidget {
   final String ownerName;
-  final Function(Item) onAddItem;
+  final Function(Item)? onAddItem;
 
-  const AddItemScreen({super.key, required this.ownerName, required this.onAddItem});
+  const AddItemScreen({super.key, required this.ownerName, this.onAddItem});
 
   @override
   State<AddItemScreen> createState() => _AddItemScreenState();
@@ -42,14 +40,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
       imagePath: _pickedImage?.path ?? 'https://picsum.photos/seed/new/400/300',
     );
 
-    // Добавляем через GetIt (сервис)
-    final service = locator<AppStateService>();
-    service.addItem(item);
-
-    // Вызываем callback, чтобы MyApp обновил InheritedWidget snapshot
-    widget.onAddItem(item);
-
-    context.pop();
+    widget.onAddItem?.call(item);
+    Navigator.pop(context, item);
   }
 
   @override
@@ -57,29 +49,49 @@ class _AddItemScreenState extends State<AddItemScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Добавить объявление'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
           child: Column(children: [
-            TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Название')),
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(labelText: 'Название'),
+            ),
             const SizedBox(height: 10),
-            TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Описание'), maxLines: 2),
+            TextField(
+              controller: _descCtrl,
+              decoration: const InputDecoration(labelText: 'Описание'),
+              maxLines: 2,
+            ),
             const SizedBox(height: 10),
             _pickedImage != null
                 ? Image.file(_pickedImage!, height: 150, fit: BoxFit.cover)
                 : Image.asset('assets/placeholder.png', height: 150, fit: BoxFit.cover),
             const SizedBox(height: 10),
-            ElevatedButton.icon(onPressed: _pickImage, icon: const Icon(Icons.photo), label: const Text('Выбрать фото')),
+            ElevatedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.photo),
+              label: const Text('Выбрать фото'),
+            ),
             const SizedBox(height: 10),
             Row(children: [
               const Text('Обмен'),
               const Spacer(),
-              Switch(value: _forExchange, onChanged: (v) => setState(() => _forExchange = v)),
+              Switch(
+                value: _forExchange,
+                onChanged: (v) => setState(() => _forExchange = v),
+              ),
             ]),
             const SizedBox(height: 10),
-            ElevatedButton(onPressed: _save, child: const Text('Сохранить')),
+            ElevatedButton(
+              onPressed: _save,
+              child: const Text('Сохранить'),
+            ),
           ]),
         ),
       ),

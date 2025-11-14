@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/item.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ItemCard extends StatelessWidget {
   final Item item;
@@ -17,7 +18,7 @@ class ItemCard extends StatelessWidget {
         width: 100,
         height: 100,
         fit: BoxFit.cover,
-        progressIndicatorBuilder: (c, u, p) => const Center(child: CircularProgressIndicator()),
+        placeholder: (c, u) => const Center(child: CircularProgressIndicator()),
         errorWidget: (c, u, e) => const Center(child: Icon(Icons.error, color: Colors.red)),
       );
     }
@@ -35,7 +36,10 @@ class ItemCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Row(children: [
-          ClipRRect(borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)), child: _buildImage(item.imagePath)),
+          ClipRRect(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+            child: _buildImage(item.imagePath),
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8),
@@ -44,11 +48,15 @@ class ItemCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(item.description, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 6),
-                Text('${item.forExchange ? "Обмен" : "Отдам"} — ${item.owner}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('${item.forExchange ? "Обмен" : "Отдам"} — ${item.owner}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ]),
             ),
           ),
-          if (onDelete != null) IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: onDelete),
+          if (onDelete != null) IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: onDelete,
+          ),
         ]),
       ),
     );
