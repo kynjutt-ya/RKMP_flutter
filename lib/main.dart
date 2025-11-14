@@ -1,58 +1,75 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'shared/bloc_observer.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/listings/screens/home_screen.dart';
+import 'features/auth/cubit/auth_cubit.dart';
+import 'features/analytics/cubit/analytics_cubit.dart';
+import 'features/listings/cubit/listings_cubit.dart';
+import 'features/profile/cubit/profile_cubit.dart';
+import 'features/settings/cubit/settings_cubit.dart';
 import 'shared/app_theme.dart';
-import 'shared/app_state.dart';
-import 'service_locator.dart';
-import 'app_router.dart';
-import 'features/listings/models/item.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
-  setupLocator();
-  runApp(const MyApp());
+  Bloc.observer = const AppBlocObserver();
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AuthCubit()),
+        BlocProvider(create: (_) => AnalyticsCubit()),
+        BlocProvider(create: (_) => ListingsCubit()),
+        BlocProvider(create: (_) => ProfileCubit()),
+        BlocProvider(create: (_) => SettingsCubit()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late final AppStateService _service;
-
-  @override
-  void initState() {
-    super.initState();
-    _service = locator<AppStateService>();
-  }
-
-  void _addMyItem(Item item) {
-    setState(() {
-      _service.addItem(item);
-    });
-  }
-
-  void _removeMyItem(String id) {
-    setState(() {
-      _service.removeItem(id);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final appState = AppState(
-      allItems: _service.allItems,
-      userItems: _service.userItems,
-    );
-
-    return AppStateProvider(
-      state: appState,
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'От соседей — мини-маркетплейс',
-        theme: AppTheme.lightTheme,
-        routerConfig: createAppRouter(_addMyItem, _removeMyItem),
-      ),
+    return BlocBuilder<SettingsCubit, SettingsState>(
+      builder: (context, settingsState) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'От соседей — мини-маркетплейс',
+          theme: settingsState.isDarkMode ? ThemeData.dark() : AppTheme.lightTheme,
+          locale: Locale(settingsState.language),
+          supportedLocales: const [
+            Locale('ru', 'RU'),
+            Locale('en', 'US'),
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: BlocListener<AuthCubit, AuthState>(
+            listener: (context, state) {
+              if (state.isAuthenticated) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              }
+            },
+            child: BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, state) {
+                return state.isAuthenticated ? const HomeScreen() : const LoginScreen();
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
