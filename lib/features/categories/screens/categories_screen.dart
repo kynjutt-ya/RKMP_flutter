@@ -23,6 +23,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _loadCategories() async {
     final prefs = await SharedPreferences.getInstance();
+    _categories.clear();
     _categories.addAll(prefs.getStringList('categories') ?? []);
     setState(() {});
   }
@@ -48,59 +49,38 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Категории товаров'),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+      appBar: AppBar(title: const Text('Категории товаров'), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop())),
+      body: Column(children: [
+        CachedNetworkImage(
+          imageUrl: _bannerUrl,
+          height: 160,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          progressIndicatorBuilder: (c, u, p) => const Center(child: CircularProgressIndicator()),
+          errorWidget: (c, u, e) => const Center(child: Icon(Icons.error, color: Colors.red)),
         ),
-      ),
-      body: Column(
-        children: [
-          CachedNetworkImage(
-            imageUrl: _bannerUrl,
-            height: 160,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            progressIndicatorBuilder: (context, url, progress) =>
-            const Center(child: CircularProgressIndicator()),
-            errorWidget: (context, url, error) =>
-            const Center(child: Icon(Icons.error, color: Colors.red)),
-          ),
-          const SizedBox(height: 12),
-          Padding(
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(children: [
+            Expanded(child: TextField(controller: _controller, decoration: const InputDecoration(labelText: 'Введите категорию'))),
+            IconButton(icon: const Icon(Icons.add), onPressed: _addCategory),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _categories.isEmpty
+              ? const Center(child: Text('Категорий пока нет'))
+              : ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(labelText: 'Введите категорию'),
-                  ),
-                ),
-                IconButton(icon: const Icon(Icons.add), onPressed: _addCategory),
-              ],
+            itemCount: _categories.length,
+            itemBuilder: (c, i) => ListTile(
+              title: Text(_categories[i]),
+              trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _removeCategory(_categories[i])),
             ),
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _categories.isEmpty
-                ? const Center(child: Text('Категорий пока нет'))
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _categories.length,
-              itemBuilder: (context, i) => ListTile(
-                title: Text(_categories[i]),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _removeCategory(_categories[i]),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
