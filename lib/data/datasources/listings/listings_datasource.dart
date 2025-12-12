@@ -1,3 +1,5 @@
+import 'package:sqflite/sqflite.dart';
+import '../../database/database_helper.dart';
 import 'listing_dto.dart';
 
 abstract class ListingsDataSource {
@@ -8,6 +10,126 @@ abstract class ListingsDataSource {
   Future<List<ListingDto>> getMyListings(String ownerId);
 }
 
+class SQLiteListingsDataSource implements ListingsDataSource {
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  @override
+  Future<List<ListingDto>> getAllListings() async {
+    try {
+      print('🔄 Начало загрузки объявлений из БД...');
+      final db = await _dbHelper.database;
+      print('✅ БД получена, выполняю запрос...');
+      final maps = await db.query(
+        'listings',
+        orderBy: 'createdAt DESC',
+      );
+      print('📖 Загружено объявлений из БД: ${maps.length}');
+      if (maps.isEmpty) {
+        print('⚠️ БД пуста, проверяю наличие таблицы...');
+        // Проверяем, существует ли таблица
+        final tables = await db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='listings'"
+        );
+        print('📋 Найдено таблиц listings: ${tables.length}');
+      }
+      final listings = List.generate(maps.length, (i) => _mapToListingDto(maps[i]));
+      for (var listing in listings) {
+        print('  - ${listing.id}: ${listing.title}');
+      }
+      return listings;
+    } catch (e, stackTrace) {
+      print('❌ Ошибка при загрузке объявлений: $e');
+      print('Stack trace: $stackTrace');
+      return [];
+    }
+  }
+
+  @override
+  Future<ListingDto?> getListingById(String id) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'listings',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isEmpty) return null;
+    return _mapToListingDto(maps.first);
+  }
+
+  @override
+  Future<ListingDto> addListing(ListingDto listing) async {
+    final db = await _dbHelper.database;
+    final map = _listingDtoToMap(listing);
+    final result = await db.insert(
+      'listings',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    print('✅ Объявление сохранено в БД: id=${listing.id}, title=${listing.title}, result=$result');
+    return listing;
+  }
+
+  @override
+  Future<void> deleteListing(String id) async {
+    final db = await _dbHelper.database;
+    await db.delete(
+      'listings',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<List<ListingDto>> getMyListings(String ownerId) async {
+    try {
+      final db = await _dbHelper.database;
+      final maps = await db.query(
+        'listings',
+        where: 'ownerId = ?',
+        whereArgs: [ownerId],
+        orderBy: 'createdAt DESC',
+      );
+      return List.generate(maps.length, (i) => _mapToListingDto(maps[i]));
+    } catch (e) {
+      print('❌ Ошибка при получении моих объявлений: $e');
+      return [];
+    }
+  }
+
+  Map<String, dynamic> _listingDtoToMap(ListingDto dto) {
+    return {
+      'id': dto.id,
+      'title': dto.title,
+      'description': dto.description,
+      'forExchange': dto.forExchange ? 1 : 0,
+      'ownerId': dto.ownerId,
+      'owner': dto.owner,
+      'imageUrl': dto.imageUrl,
+      'imagePath': dto.imagePath,
+      'category': dto.category,
+      'createdAt': dto.createdAt.toIso8601String(),
+      'condition': dto.condition,
+    };
+  }
+
+  ListingDto _mapToListingDto(Map<String, dynamic> map) {
+    return ListingDto(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      description: map['description'] as String,
+      forExchange: (map['forExchange'] as int) == 1,
+      ownerId: map['ownerId'] as String,
+      owner: map['owner'] as String,
+      imageUrl: map['imageUrl'] as String?,
+      imagePath: map['imagePath'] as String?,
+      category: map['category'] as String,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      condition: map['condition'] as String,
+    );
+  }
+}
+
+// Старая реализация для обратной совместимости (можно удалить после тестирования)
 class InMemoryListingsDataSource implements ListingsDataSource {
   final List<ListingDto> _listings = [];
 

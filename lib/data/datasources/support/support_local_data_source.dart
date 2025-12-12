@@ -1,3 +1,5 @@
+import 'package:sqflite/sqflite.dart';
+import '../../database/database_helper.dart';
 import 'support_ticket_dto.dart';
 
 abstract class SupportDataSource {
@@ -8,56 +10,92 @@ abstract class SupportDataSource {
   Future<SupportTicketDto?> getTicketById(String id);
 }
 
-class SupportLocalDataSource implements SupportDataSource {
-  final List<SupportTicketDto> _tickets = [];
+class SQLiteSupportDataSource implements SupportDataSource {
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   @override
   Future<List<SupportTicketDto>> getAllTickets() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return List.from(_tickets);
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'support_tickets',
+      orderBy: 'createdAt DESC',
+    );
+    return List.generate(maps.length, (i) => _mapToTicketDto(maps[i]));
   }
 
   @override
   Future<List<SupportTicketDto>> getTicketsByUserId(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 50));
-    return _tickets.where((t) => t.userId == userId).toList();
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'support_tickets',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'createdAt DESC',
+    );
+    return List.generate(maps.length, (i) => _mapToTicketDto(maps[i]));
   }
 
   @override
   Future<SupportTicketDto> createTicket(SupportTicketDto ticket) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    _tickets.add(ticket);
+    final db = await _dbHelper.database;
+    await db.insert(
+      'support_tickets',
+      _ticketDtoToMap(ticket),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return ticket;
   }
 
   @override
   Future<SupportTicketDto> updateTicketStatus(String id, String status) async {
-    await Future.delayed(const Duration(milliseconds: 50));
-    final index = _tickets.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      final ticket = _tickets[index];
-      _tickets[index] = SupportTicketDto(
-        id: ticket.id,
-        userId: ticket.userId,
-        itemId: ticket.itemId,
-        category: ticket.category,
-        message: ticket.message,
-        createdAt: ticket.createdAt,
-        status: status,
-      );
-      return _tickets[index];
+    final db = await _dbHelper.database;
+    await db.update(
+      'support_tickets',
+      {'status': status},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    final updated = await getTicketById(id);
+    if (updated == null) {
+      throw Exception('Ticket not found');
     }
-    throw Exception('Ticket not found');
+    return updated;
   }
 
   @override
   Future<SupportTicketDto?> getTicketById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 50));
-    try {
-      return _tickets.firstWhere((t) => t.id == id);
-    } catch (e) {
-      return null;
-    }
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'support_tickets',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isEmpty) return null;
+    return _mapToTicketDto(maps.first);
+  }
+
+  Map<String, dynamic> _ticketDtoToMap(SupportTicketDto dto) {
+    return {
+      'id': dto.id,
+      'userId': dto.userId,
+      'itemId': dto.itemId,
+      'category': dto.category,
+      'message': dto.message,
+      'createdAt': dto.createdAt.toIso8601String(),
+      'status': dto.status,
+    };
+  }
+
+  SupportTicketDto _mapToTicketDto(Map<String, dynamic> map) {
+    return SupportTicketDto(
+      id: map['id'] as String,
+      userId: map['userId'] as String,
+      itemId: map['itemId'] as String?,
+      category: map['category'] as String,
+      message: map['message'] as String,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      status: map['status'] as String,
+    );
   }
 }
 

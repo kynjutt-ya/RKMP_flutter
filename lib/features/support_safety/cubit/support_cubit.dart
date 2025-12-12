@@ -1,5 +1,8 @@
 // lib/features/support_safety/cubit/support_cubit.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../domain/usecases/support/create_ticket_usecase.dart';
+import '../../../domain/usecases/support/get_all_tickets_usecase.dart';
+import '../../../shared/support_ticket_adapter.dart';
 import '../models/support_ticket.dart';
 
 class FAQItem {
@@ -17,7 +20,13 @@ class FAQItem {
 }
 
 class SupportCubit extends Cubit<SupportState> {
-  SupportCubit() : super(const SupportState()) {
+  final CreateTicketUseCase createTicketUseCase;
+  final GetAllTicketsUseCase getAllTicketsUseCase;
+
+  SupportCubit({
+    required this.createTicketUseCase,
+    required this.getAllTicketsUseCase,
+  }) : super(const SupportState()) {
     loadFaq();
     loadTickets();
   }
@@ -26,29 +35,58 @@ class SupportCubit extends Cubit<SupportState> {
     emit(state.copyWith(selectedTicket: ticket));
   }
 
-  void createTicket({
+  Future<void> createTicket({
     required String userId,
     String? itemId,
     required String category,
     required String message,
     String? imageUrl,
-  }) {
-    final ticket = SupportTicket(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: userId,
-      itemId: itemId,
-      category: category,
-      message: message,
-    );
+  }) async {
+    try {
+      print('➕ Создание обращения в поддержку: userId=$userId, category=$category');
+      
+      // Создаем модель для Clean Architecture
+      final ticketModel = SupportTicketAdapter.toModel(
+        SupportTicket(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          userId: userId,
+          itemId: itemId,
+          category: category,
+          message: message,
+        ),
+      );
 
-    final newTickets = [...state.tickets, ticket];
-    emit(state.copyWith(tickets: newTickets, selectedTicket: ticket));
+      // Сохраняем в БД через use case
+      final createdModel = await createTicketUseCase(ticketModel);
+      print('✅ Обращение сохранено в БД: id=${createdModel.id}');
+
+      // Конвертируем обратно в SupportTicket для UI
+      final ticket = SupportTicketAdapter.toTicket(createdModel);
+
+      // Перезагружаем все обращения из БД
+      await loadTickets();
+
+      emit(state.copyWith(selectedTicket: ticket));
+    } catch (e) {
+      print('❌ Ошибка создания обращения: $e');
+      emit(state.copyWith(error: e.toString()));
+    }
   }
 
-  void loadTickets({String? userId}) {
-    // В реальном приложении здесь будет загрузка с сервера
-    // Пока используем текущие тикеты из состояния
-    emit(state);
+  Future<void> loadTickets({String? userId}) async {
+    try {
+      print('🔄 Загрузка обращений в поддержку из БД...');
+      final ticketsModels = await getAllTicketsUseCase();
+      print('✅ Загружено ${ticketsModels.length} обращений');
+      
+      // Конвертируем в SupportTicket для UI
+      final tickets = SupportTicketAdapter.toTicketList(ticketsModels);
+      
+      emit(state.copyWith(tickets: tickets));
+    } catch (e) {
+      print('❌ Ошибка загрузки обращений: $e');
+      emit(state.copyWith(error: e.toString()));
+    }
   }
 
   void updateTicketStatus(String ticketId, String status) {
@@ -111,22 +149,26 @@ class SupportState {
   final List<SupportTicket> tickets;
   final SupportTicket? selectedTicket;
   final List<FAQItem> faqList;
+  final String? error;
 
   const SupportState({
     this.tickets = const [],
     this.selectedTicket,
     this.faqList = const [],
+    this.error,
   });
 
   SupportState copyWith({
     List<SupportTicket>? tickets,
     SupportTicket? selectedTicket,
     List<FAQItem>? faqList,
+    String? error,
   }) {
     return SupportState(
       tickets: tickets ?? this.tickets,
       selectedTicket: selectedTicket ?? this.selectedTicket,
       faqList: faqList ?? this.faqList,
+      error: error,
     );
   }
 }

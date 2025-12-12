@@ -57,13 +57,13 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authState = context.read<AuthCubit>().state;
     final userId = authState.userEmail ?? 'guest_${DateTime.now().millisecondsSinceEpoch}';
 
-    context.read<SupportCubit>().createTicket(
+    await context.read<SupportCubit>().createTicket(
           userId: userId,
           itemId: widget.itemId,
           category: _selectedCategory,
@@ -71,10 +71,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           imageUrl: kIsWeb ? null : _pickedImage?.path,
         );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Обращение создано! Мы рассмотрим его в ближайшее время.')),
-    );
-    Navigator.pop(context);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Обращение создано! Мы рассмотрим его в ближайшее время.')),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override

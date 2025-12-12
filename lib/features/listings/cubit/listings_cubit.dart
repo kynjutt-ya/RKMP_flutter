@@ -4,6 +4,7 @@ import '../../../domain/usecases/listings/get_all_listings_usecase.dart';
 import '../../../domain/usecases/listings/add_listing_usecase.dart';
 import '../../../domain/usecases/listings/delete_listing_usecase.dart';
 import '../../../domain/usecases/listings/get_listing_by_id_usecase.dart';
+import '../../../domain/usecases/listings/get_my_listings_usecase.dart';
 import '../../auth/cubit/auth_cubit.dart';
 
 
@@ -12,6 +13,7 @@ class ListingsCubit extends Cubit<ListingsState> {
   final AddListingUseCase addListingUseCase;
   final DeleteListingUseCase deleteListingUseCase;
   final GetListingByIdUseCase getListingByIdUseCase;
+  final GetMyListingsUseCase getMyListingsUseCase;
   final AuthCubit? authCubit;
 
   ListingsCubit({
@@ -19,21 +21,33 @@ class ListingsCubit extends Cubit<ListingsState> {
     required this.addListingUseCase,
     required this.deleteListingUseCase,
     required this.getListingByIdUseCase,
+    required this.getMyListingsUseCase,
     this.authCubit,
   }) : super(ListingsState()) {
-    loadListings();
+    // Загружаем объявления асинхронно, не блокируя создание Cubit
+    Future.microtask(() {
+      loadListings().catchError((error) {
+        print('❌ Ошибка при загрузке объявлений: $error');
+      });
+      loadMyListings().catchError((error) {
+        print('❌ Ошибка при загрузке моих объявлений: $error');
+      });
+    });
   }
 
   Future<void> loadListings() async {
     emit(state.copyWith(isLoading: true));
     try {
+      print('🔄 Загрузка объявлений из БД...');
       final listings = await getAllListingsUseCase();
+      print('✅ Загружено ${listings.length} объявлений');
       emit(state.copyWith(
         allItems: listings,
         filteredItems: listings,
         isLoading: false,
       ));
     } catch (e) {
+      print('❌ Ошибка загрузки объявлений: $e');
       emit(state.copyWith(
         error: e.toString(),
         isLoading: false,
@@ -41,14 +55,33 @@ class ListingsCubit extends Cubit<ListingsState> {
     }
   }
 
+  Future<void> loadMyListings() async {
+    try {
+      final currentUserId = _getCurrentUserId();
+      if (currentUserId == null || currentUserId.isEmpty) {
+        print('⚠️ Не удалось определить ID пользователя для загрузки моих объявлений');
+        emit(state.copyWith(myItems: []));
+        return;
+      }
+      print('🔄 Загрузка моих объявлений для пользователя: $currentUserId');
+      final myListings = await getMyListingsUseCase(currentUserId);
+      print('✅ Загружено ${myListings.length} моих объявлений');
+      emit(state.copyWith(myItems: myListings));
+    } catch (e) {
+      print('❌ Ошибка загрузки моих объявлений: $e');
+      emit(state.copyWith(error: e.toString()));
+    }
+  }
+
   Future<void> addListing(ListingModel listing) async {
     try {
+      print('➕ Добавление объявления: id=${listing.id}, title=${listing.title}, ownerId=${listing.ownerId}');
       final addedListing = await addListingUseCase(listing);
+      print('✅ Объявление добавлено в БД');
       final newAllItems = [...state.allItems, addedListing];
-      final currentUserId = _getCurrentUserId();
-      final newMyItems = listing.ownerId == currentUserId
-          ? [...state.myItems, addedListing]
-          : state.myItems;
+      
+      // Перезагружаем мои объявления из БД, чтобы убедиться, что всё синхронизировано
+      await loadMyListings();
 
       emit(state.copyWith(
         allItems: newAllItems,
@@ -57,9 +90,9 @@ class ListingsCubit extends Cubit<ListingsState> {
           state.searchQuery,
           state.selectedCategory,
         ),
-        myItems: newMyItems,
       ));
     } catch (e) {
+      print('❌ Ошибка добавления объявления: $e');
       emit(state.copyWith(error: e.toString()));
     }
   }
@@ -68,7 +101,9 @@ class ListingsCubit extends Cubit<ListingsState> {
     try {
       await deleteListingUseCase(id);
       final List<ListingModel> newAllItems = state.allItems.where((item) => item.id != id).toList();
-      final List<ListingModel> newMyItems = state.myItems.where((item) => item.id != id).toList();
+      
+      // Перезагружаем мои объявления из БД, чтобы убедиться, что всё синхронизировано
+      await loadMyListings();
 
       emit(state.copyWith(
         allItems: newAllItems,
@@ -77,7 +112,6 @@ class ListingsCubit extends Cubit<ListingsState> {
           state.searchQuery,
           state.selectedCategory,
         ),
-        myItems: newMyItems,
       ));
     } catch (e) {
       emit(state.copyWith(error: e.toString()));

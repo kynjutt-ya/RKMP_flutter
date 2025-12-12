@@ -4,11 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(ProfileState()) {
-    // Загружаем профиль асинхронно, не блокируя запуск приложения
     Future.microtask(() {
       _loadProfile().catchError((error) {
         debugPrint('Error loading profile: $error');
-        // Продолжаем с пустым состоянием, если загрузка не удалась
       });
     });
   }
@@ -31,7 +29,6 @@ class ProfileCubit extends Cubit<ProfileState> {
       ));
     } catch (e) {
       debugPrint('Error loading profile from SharedPreferences: $e');
-      // Оставляем состояние по умолчанию
     }
   }
 
