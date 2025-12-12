@@ -38,8 +38,8 @@ class EcoTipsScreen extends StatelessWidget {
           if (state.tipsList.isEmpty) {
             return const Center(
               child: Text('Советы загружаются...'),
-            );
-          }
+    );
+  }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -570,5 +570,5 @@ class RecyclingMapScreen extends StatelessWidget {
           'textiles': 'Текстиль',
         };
         return labels[type] ?? type;
-      }
-    }
+  }
+}

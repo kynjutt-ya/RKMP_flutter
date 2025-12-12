@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/models/listing_model.dart';
+import '../../../shared/item_adapter.dart';
 import '../models/item.dart';
 import '../cubit/listings_cubit.dart';
 import '../../auth/cubit/auth_cubit.dart';
@@ -72,7 +74,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final authState = context.read<AuthCubit>().state;
     final ownerId = authState.userEmail ?? 'guest_${DateTime.now().millisecondsSinceEpoch}';
 
-    final item = Item(
+    final listing = ListingModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
@@ -86,12 +88,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
           : (kIsWeb ? null : _pickedImage?.path),
       category: _selectedCategory,
       condition: _selectedCondition,
+      createdAt: DateTime.now(),
     );
 
-    // Интеграция с другими модулями
-    context.read<ListingsCubit>().addListing(item);
+    // Используем use case через Cubit (Clean Architecture)
+    context.read<ListingsCubit>().addListing(listing);
     
     // Сохраняем состояние до обновления для проверки достижений
+    // Для обратной совместимости с EcoImpactCubit используем адаптер
+    final item = ItemAdapter.toItem(listing);
     final impactStateBefore = context.read<EcoImpactCubit>().state;
     context.read<EcoImpactCubit>().recalcImpactOnAdd(item);
     
@@ -316,10 +321,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       ],
                     ),
                   ),
-                  Switch(
-                    value: _forExchange,
-                    onChanged: (v) => setState(() => _forExchange = v),
-                  ),
+              Switch(
+                value: _forExchange,
+                onChanged: (v) => setState(() => _forExchange = v),
+              ),
                 ],
               ),
             ),
@@ -327,7 +332,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _save,
+              onPressed: _save,
                 icon: const Icon(Icons.check_circle, size: 22),
                 label: const Text(
                   'Создать объявление',

@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     try {
-      context.read<AuthCubit>().login(email, name.isEmpty ? 'Пользователь' : name);
+    context.read<AuthCubit>().login(email, name.isEmpty ? 'Пользователь' : name);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -65,9 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
-              child: Column(
+          child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            children: [
                   const SizedBox(height: 40),
                   Icon(
                     Icons.eco,
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
                   TextFormField(
-                    controller: _emailCtrl,
+                controller: _emailCtrl,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       hintText: 'example@mail.ru',
@@ -114,10 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                       return null;
                     },
-                  ),
+              ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _passwordCtrl,
+                controller: _passwordCtrl,
                     decoration: InputDecoration(
                       labelText: 'Пароль',
                       hintText: 'Введите пароль',
@@ -147,10 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                       return null;
                     },
-                  ),
+              ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _nameCtrl,
+                controller: _nameCtrl,
                     decoration: InputDecoration(
                       labelText: 'Ваше имя (опционально)',
                       hintText: 'Как к вам обращаться?',
@@ -163,9 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _login(context),
-                  ),
+              ),
                   const SizedBox(height: 32),
-                  ElevatedButton(
+              ElevatedButton(
                     onPressed: _isLoading ? null : () => _login(context),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -193,8 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       _nameCtrl.text = 'Тестовый пользователь';
                     },
                     child: const Text('Быстрый вход (для теста)'),
-                  ),
-                ],
+              ),
+            ],
               ),
             ),
           ),

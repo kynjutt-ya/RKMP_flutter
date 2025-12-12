@@ -10,16 +10,16 @@ class SupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Поддержка и безопасность'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/listings'),
+        appBar: AppBar(
+          title: const Text('Поддержка и безопасность'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/listings'),
+          ),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
           Card(
             elevation: 2,
             child: ListTile(
@@ -79,9 +79,9 @@ class SupportScreen extends StatelessWidget {
                     '• Проверяйте вещи перед оплатой\n'
                     '• Сообщайте о подозрительных объявлениях',
                     style: TextStyle(fontSize: 14, height: 1.5),
-                  ),
-                ],
-              ),
+            ),
+          ],
+        ),
             ),
           ),
         ],

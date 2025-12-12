@@ -36,19 +36,19 @@ class _SettingsScreenContent extends StatelessWidget {
             children: [
               Card(
                 child: Column(
-                  children: [
-                    SwitchListTile(
-                      title: const Text('Тёмная тема'),
+            children: [
+              SwitchListTile(
+                title: const Text('Тёмная тема'),
                       subtitle: const Text('Использовать тёмную тему приложения'),
-                      value: state.isDarkMode,
-                      onChanged: (value) => context.read<ProfileSettingsCubit>().toggleDarkMode(value),
-                    ),
+                value: state.isDarkMode,
+                onChanged: (value) => context.read<ProfileSettingsCubit>().toggleDarkMode(value),
+              ),
                     const Divider(height: 1),
-                    ListTile(
-                      title: const Text('Язык'),
+              ListTile(
+                title: const Text('Язык'),
                       subtitle: Text(state.language == 'ru' ? 'Русский' : 'English'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => _changeLanguage(context),
+                onTap: () => _changeLanguage(context),
                     ),
                   ],
                 ),
@@ -57,18 +57,18 @@ class _SettingsScreenContent extends StatelessWidget {
               Card(
                 child: Column(
                   children: [
-                    SwitchListTile(
-                      title: const Text('Уведомления'),
+              SwitchListTile(
+                title: const Text('Уведомления'),
                       subtitle: const Text('Получать уведомления о новых объявлениях'),
-                      value: state.notificationsEnabled,
-                      onChanged: (value) => context.read<ProfileSettingsCubit>().toggleNotifications(value),
-                    ),
+                value: state.notificationsEnabled,
+                onChanged: (value) => context.read<ProfileSettingsCubit>().toggleNotifications(value),
+              ),
                     const Divider(height: 1),
-                    SwitchListTile(
-                      title: const Text('История поиска'),
+              SwitchListTile(
+                title: const Text('История поиска'),
                       subtitle: const Text('Сохранять историю поисковых запросов'),
-                      value: state.searchHistoryEnabled,
-                      onChanged: (value) => context.read<ProfileSettingsCubit>().toggleSearchHistory(value),
+                value: state.searchHistoryEnabled,
+                onChanged: (value) => context.read<ProfileSettingsCubit>().toggleSearchHistory(value),
                     ),
                   ],
                 ),
@@ -76,10 +76,10 @@ class _SettingsScreenContent extends StatelessWidget {
               const SizedBox(height: 16),
               Card(
                 child: ListTile(
-                  title: const Text('Размер кэша'),
-                  subtitle: Text('${state.cacheSizeMB} MB'),
+                title: const Text('Размер кэша'),
+                subtitle: Text('${state.cacheSizeMB} MB'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => _changeCacheSize(context, state.cacheSizeMB),
+                onTap: () => _changeCacheSize(context, state.cacheSizeMB),
                 ),
               ),
             ],

@@ -249,8 +249,8 @@ class FAQScreen extends StatelessWidget {
           if (state.faqList.isEmpty) {
             return const Center(
               child: Text('FAQ загружается...'),
-            );
-          }
+    );
+  }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),

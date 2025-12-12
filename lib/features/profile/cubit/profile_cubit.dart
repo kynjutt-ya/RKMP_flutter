@@ -4,24 +4,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(ProfileState()) {
-    _loadProfile();
+    // Загружаем профиль асинхронно, не блокируя запуск приложения
+    Future.microtask(() {
+      _loadProfile().catchError((error) {
+        debugPrint('Error loading profile: $error');
+        // Продолжаем с пустым состоянием, если загрузка не удалась
+      });
+    });
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedAvatar = prefs.getString('avatarUrl');
-    final savedName = prefs.getString('userName') ?? '';
-    final savedEmail = prefs.getString('userEmail') ?? '';
-    final savedPhone = prefs.getString('userPhone') ?? '';
-    final savedFavorites = prefs.getStringList('favoriteItems') ?? [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedAvatar = prefs.getString('avatarUrl');
+      final savedName = prefs.getString('userName') ?? '';
+      final savedEmail = prefs.getString('userEmail') ?? '';
+      final savedPhone = prefs.getString('userPhone') ?? '';
+      final savedFavorites = prefs.getStringList('favoriteItems') ?? [];
 
-    emit(state.copyWith(
-      userName: savedName,
-      userEmail: savedEmail,
-      userPhone: savedPhone,
-      avatarUrl: savedAvatar,
-      favoriteItems: savedFavorites,
-    ));
+      emit(state.copyWith(
+        userName: savedName,
+        userEmail: savedEmail,
+        userPhone: savedPhone,
+        avatarUrl: savedAvatar,
+        favoriteItems: savedFavorites,
+      ));
+    } catch (e) {
+      debugPrint('Error loading profile from SharedPreferences: $e');
+      // Оставляем состояние по умолчанию
+    }
   }
 
   Future<void> _saveToPrefs() async {

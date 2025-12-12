@@ -1,45 +1,91 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'shared/bloc_observer.dart';
-import 'features/auth/screens/login_screen.dart';
-import 'features/listings/screens/home_screen.dart';
-import 'features/auth/cubit/auth_cubit.dart';
-import 'features/analytics/cubit/analytics_cubit.dart';
-import 'features/listings/cubit/listings_cubit.dart';
-import 'features/profile/cubit/profile_cubit.dart';
-import 'features/settings/cubit/settings_cubit.dart';
-import 'shared/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
+
+import 'app_router.dart';
+import 'features/auth/cubit/auth_cubit.dart';
+import 'features/eco_guide/cubit/eco_guide_cubit.dart';
+import 'features/eco_impact/cubit/eco_impact_cubit.dart';
+import 'features/listings/cubit/listings_cubit.dart';
+import 'data/datasources/listings/listings_datasource.dart';
+import 'data/repositories/listings_repository_impl.dart';
+import 'domain/interfaces/repositories/listings_repository.dart';
+import 'domain/usecases/listings/get_all_listings_usecase.dart';
+import 'domain/usecases/listings/add_listing_usecase.dart';
+import 'domain/usecases/listings/delete_listing_usecase.dart';
+import 'domain/usecases/listings/get_listing_by_id_usecase.dart';
+import 'features/profile/cubit/profile_cubit.dart';
+import 'features/profile/cubit/profile_settings_cubit.dart';
+import 'features/repair_upcycle/cubit/repair_cubit.dart';
+import 'features/support_safety/cubit/support_cubit.dart';
+import 'shared/app_theme.dart';
+import 'shared/bloc_observer.dart';
 
 void main() {
+  // Инициализация Flutter для веб
+  WidgetsFlutterBinding.ensureInitialized();
+  
   Bloc.observer = const AppBlocObserver();
+
+  // Инициализация зависимостей для Clean Architecture (Listings)
+  final listingsDataSource = InMemoryListingsDataSource();
+  final listingsRepository = ListingsRepositoryImpl(listingsDataSource);
+  final getAllListingsUseCase = GetAllListingsUseCase(listingsRepository);
+  final addListingUseCase = AddListingUseCase(listingsRepository);
+  final deleteListingUseCase = DeleteListingUseCase(listingsRepository);
+  final getListingByIdUseCase = GetListingByIdUseCase(listingsRepository);
+  
+  final authCubit = AuthCubit();
+  
+  final listingsCubit = ListingsCubit(
+    getAllListingsUseCase: getAllListingsUseCase,
+    addListingUseCase: addListingUseCase,
+    deleteListingUseCase: deleteListingUseCase,
+    getListingByIdUseCase: getListingByIdUseCase,
+    authCubit: authCubit,
+  );
+  final profileCubit = ProfileCubit();
+  final profileSettingsCubit = ProfileSettingsCubit();
+  final ecoGuideCubit = EcoGuideCubit();
+  final ecoImpactCubit = EcoImpactCubit();
+  final repairCubit = RepairCubit();
+  final supportCubit = SupportCubit();
+
+  final appRouter = AppRouter(authCubit: authCubit);
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => AuthCubit()),
-        BlocProvider(create: (_) => AnalyticsCubit()),
-        BlocProvider(create: (_) => ListingsCubit()),
-        BlocProvider(create: (_) => ProfileCubit()),
-        BlocProvider(create: (_) => SettingsCubit()),
+        BlocProvider<AuthCubit>.value(value: authCubit),
+        BlocProvider<ListingsCubit>.value(value: listingsCubit),
+        BlocProvider<ProfileCubit>.value(value: profileCubit),
+        BlocProvider<ProfileSettingsCubit>.value(value: profileSettingsCubit),
+        BlocProvider<EcoGuideCubit>.value(value: ecoGuideCubit),
+        BlocProvider<EcoImpactCubit>.value(value: ecoImpactCubit),
+        BlocProvider<RepairCubit>.value(value: repairCubit),
+        BlocProvider<SupportCubit>.value(value: supportCubit),
       ],
-      child: const MyApp(),
+      child: MyApp(router: appRouter.router),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SettingsCubit, SettingsState>(
+    return BlocBuilder<ProfileSettingsCubit, ProfileSettingsState>(
       builder: (context, settingsState) {
-        return MaterialApp(
+        return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'От соседей — мини-маркетплейс',
-          theme: settingsState.isDarkMode ? ThemeData.dark() : AppTheme.lightTheme,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: settingsState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           locale: Locale(settingsState.language),
           supportedLocales: const [
             Locale('ru', 'RU'),
@@ -50,24 +96,7 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: BlocListener<AuthCubit, AuthState>(
-            listener: (context, state) {
-              if (state.isAuthenticated) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),
-                );
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
-            },
-            child: BlocBuilder<AuthCubit, AuthState>(
-              builder: (context, state) {
-                return state.isAuthenticated ? const HomeScreen() : const LoginScreen();
-              },
-            ),
-          ),
+          routerConfig: router,
         );
       },
     );

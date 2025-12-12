@@ -47,7 +47,7 @@ class ItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Row(
           children: [
-            ClipRRect(
+          ClipRRect(
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
               child: Container(
                 width: 120,
@@ -55,9 +55,9 @@ class ItemCard extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 child: _buildImage(item.imageUrl, item.imagePath, item.imageBytes),
               ),
-            ),
-            Expanded(
-              child: Padding(
+          ),
+          Expanded(
+            child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +124,7 @@ class ItemCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                const SizedBox(height: 4),
                     Text(
                       '👤 ${item.owner}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -134,18 +134,18 @@ class ItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
             ),
+          ),
             if (onDelete != null)
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: IconButton(
                   icon: const Icon(Icons.delete_outline, size: 22),
                   color: Colors.red[400],
-                  onPressed: onDelete,
+            onPressed: onDelete,
                   tooltip: 'Удалить',
                 ),
-              ),
+          ),
           ],
         ),
       ),

@@ -20,12 +20,12 @@ class RepairListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
         title: const Text('Ремонт и апсайклинг'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/listings'),
-        ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/listings'),
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -33,7 +33,7 @@ class RepairListScreen extends StatelessWidget {
             tooltip: 'Создать запрос',
           ),
         ],
-      ),
+        ),
       body: BlocBuilder<RepairCubit, RepairState>(
         builder: (context, state) {
           if (state.allServices.isEmpty) {

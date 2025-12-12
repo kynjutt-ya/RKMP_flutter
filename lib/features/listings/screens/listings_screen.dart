@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../cubit/listings_cubit.dart';
+import '../../../shared/item_adapter.dart';
 import '../models/item.dart';
 import '../widgets/item_table.dart';
 import '../../auth/cubit/auth_cubit.dart';
@@ -55,9 +56,9 @@ class _ListingsScreenContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Chip(
-                          label: Text('Поиск: "${state.searchQuery}"'),
+                        label: Text('Поиск: "${state.searchQuery}"'),
                           deleteIcon: const Icon(Icons.close, size: 16),
-                          onDeleted: () => context.read<ListingsCubit>().clearSearch(),
+                        onDeleted: () => context.read<ListingsCubit>().clearSearch(),
                         ),
                       ),
                     ],
@@ -67,7 +68,7 @@ class _ListingsScreenContent extends StatelessWidget {
                 child: displayedItems.isEmpty
                     ? const Center(child: Text('Нет объявлений'))
                     : ItemTable(
-                  items: displayedItems,
+                  items: ItemAdapter.toItemList(displayedItems),
                   onTap: (item) => _openItemDetail(context, item),
                 ),
               ),
@@ -104,7 +105,7 @@ class _ListingsScreenContent extends StatelessWidget {
         children: [
           Image.network(
             bannerUrl,
-            fit: BoxFit.cover,
+      fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
             opacity: const AlwaysStoppedAnimation(0.3),
@@ -164,7 +165,7 @@ class _ListingsScreenContent extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: [
+        children: [
             _buildNavButton(
               context,
               icon: Icons.add_circle_outline,
@@ -177,7 +178,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.list,
               label: 'Мои',
-              onPressed: () => context.push('/listings/my'),
+            onPressed: () => context.push('/listings/my'),
               color: theme.colorScheme.secondary,
             ),
             const SizedBox(width: 8),
@@ -185,7 +186,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.person,
               label: 'Профиль',
-              onPressed: () => context.go('/profile'),
+            onPressed: () => context.go('/profile'),
               color: theme.colorScheme.tertiary,
             ),
             const SizedBox(width: 8),
@@ -193,7 +194,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.eco,
               label: 'Эко-гид',
-              onPressed: () => context.go('/eco-guide'),
+            onPressed: () => context.go('/eco-guide'),
               color: Colors.green[600]!,
             ),
             const SizedBox(width: 8),
@@ -201,7 +202,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.build,
               label: 'Ремонт',
-              onPressed: () => context.go('/repair'),
+            onPressed: () => context.go('/repair'),
               color: Colors.orange[600]!,
             ),
             const SizedBox(width: 8),
@@ -209,7 +210,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.analytics,
               label: 'Эко-след',
-              onPressed: () => context.go('/impact'),
+            onPressed: () => context.go('/impact'),
               color: Colors.teal[600]!,
             ),
             const SizedBox(width: 8),
@@ -217,7 +218,7 @@ class _ListingsScreenContent extends StatelessWidget {
               context,
               icon: Icons.support_agent,
               label: 'Поддержка',
-              onPressed: () => context.go('/support'),
+            onPressed: () => context.go('/support'),
               color: Colors.blue[600]!,
             ),
           ],
@@ -262,8 +263,8 @@ class _ListingsScreenContent extends StatelessWidget {
                     color: color,
                     letterSpacing: 0.3,
                   ),
-                ),
-              ],
+          ),
+        ],
             ),
           ),
         ),

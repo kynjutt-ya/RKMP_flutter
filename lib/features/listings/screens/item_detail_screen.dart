@@ -36,7 +36,7 @@ class ItemDetailScreen extends StatelessWidget {
       height: 300,
       fit: BoxFit.cover,
     );
-  }
+    }
 
   String _getCategoryLabel(String category) {
     const labels = {
@@ -101,7 +101,7 @@ class ItemDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
+          ClipRRect(
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(24),
                 bottomRight: Radius.circular(24),
@@ -119,8 +119,8 @@ class ItemDetailScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
                     ),
-                  ),
-                  const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -251,7 +251,7 @@ class ItemDetailScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+          const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -270,7 +270,7 @@ class ItemDetailScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Запрос на "${item.title}" отправлен'),
                           backgroundColor: Theme.of(context).colorScheme.primary,
@@ -296,7 +296,7 @@ class ItemDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
-                  ),
+          ),
                 ],
               ),
             ),

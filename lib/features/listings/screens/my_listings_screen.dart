@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../cubit/listings_cubit.dart';
-import '../models/item.dart';
+import '../../../shared/item_adapter.dart';
 import '../widgets/item_table.dart';
 import '../../auth/cubit/auth_cubit.dart';
 
@@ -32,7 +32,7 @@ class MyListingsScreen extends StatelessWidget {
           return myItems.isEmpty
               ? const Center(child: Text('У вас пока нет объявлений'))
               : ItemTable(
-            items: myItems,
+            items: ItemAdapter.toItemList(myItems),
             onDelete: (id) => context.read<ListingsCubit>().removeListing(id),
           );
         },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../listings/cubit/listings_cubit.dart';
+import '../../../shared/item_adapter.dart';
 import '../../listings/models/item.dart';
 import '../../listings/widgets/item_table.dart';
 import '../cubit/profile_cubit.dart';
@@ -57,16 +58,17 @@ class FavoritesScreen extends StatelessWidget {
 
           return BlocBuilder<ListingsCubit, ListingsState>(
             builder: (context, listingsState) {
-              final favoriteItems = listingsState.allItems
-                  .where((item) => favoriteIds.contains(item.id))
+              final favoriteListings = listingsState.allItems
+                  .where((listing) => favoriteIds.contains(listing.id))
                   .toList();
 
-              if (favoriteItems.isEmpty) {
+              if (favoriteListings.isEmpty) {
                 return const Center(
                   child: Text('Избранные объявления не найдены'),
                 );
               }
 
+              final favoriteItems = ItemAdapter.toItemList(favoriteListings);
               return ItemTable(
                 items: favoriteItems,
                 onTap: (item) => context.push('/listings/item', extra: item),

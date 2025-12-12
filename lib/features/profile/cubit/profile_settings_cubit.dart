@@ -1,12 +1,20 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileSettingsCubit extends Cubit<ProfileSettingsState> {
   ProfileSettingsCubit() : super(const ProfileSettingsState()) {
-    _loadSettings();
+    // Загружаем настройки асинхронно, не блокируя запуск приложения
+    Future.microtask(() {
+      _loadSettings().catchError((error) {
+        debugPrint('Error loading settings: $error');
+        // Продолжаем с состоянием по умолчанию, если загрузка не удалась
+      });
+    });
   }
 
   Future<void> _loadSettings() async {
+    try {
     final prefs = await SharedPreferences.getInstance();
     emit(ProfileSettingsState(
       isDarkMode: prefs.getBool('isDarkMode') ?? false,
@@ -15,6 +23,10 @@ class ProfileSettingsCubit extends Cubit<ProfileSettingsState> {
       searchHistoryEnabled: prefs.getBool('searchHistoryEnabled') ?? true,
       cacheSizeMB: prefs.getInt('cacheSizeMB') ?? 100,
     ));
+    } catch (e) {
+      debugPrint('Error loading settings from SharedPreferences: $e');
+      // Оставляем состояние по умолчанию
+    }
   }
 
   Future<void> _saveSetting(String key, dynamic value) async {

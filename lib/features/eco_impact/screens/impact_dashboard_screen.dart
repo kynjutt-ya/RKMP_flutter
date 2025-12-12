@@ -11,12 +11,12 @@ class ImpactDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
         title: const Text('Экологический след'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/listings'),
-        ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/listings'),
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.emoji_events),
@@ -24,7 +24,7 @@ class ImpactDashboardScreen extends StatelessWidget {
             tooltip: 'Достижения',
           ),
         ],
-      ),
+        ),
       body: BlocBuilder<EcoImpactCubit, EcoImpactState>(
         builder: (context, state) {
           return SingleChildScrollView(
