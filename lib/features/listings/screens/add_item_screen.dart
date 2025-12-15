@@ -9,6 +9,7 @@ import '../../../../core/models/listing_model.dart';
 import '../../../shared/item_adapter.dart';
 import '../models/item.dart';
 import '../cubit/listings_cubit.dart';
+import '../cubit/geocoding_cubit.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../eco_impact/cubit/eco_impact_cubit.dart';
 import '../../../shared/image_helper.dart';
@@ -26,12 +27,17 @@ class AddItemScreen extends StatefulWidget {
 class _AddItemScreenState extends State<AddItemScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
   bool _forExchange = false;
+  bool _searchInCity = false;
   XFile? _pickedImage;
   Uint8List? _pickedImageBytes;
   File? _pickedImageFile;
   String _selectedCategory = 'other';
   String _selectedCondition = 'used';
+  double? _listingLat;
+  double? _listingLon;
 
   static const List<String> categories = [
     'furniture',
@@ -63,12 +69,57 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  void _save() {
+  void _onAddressChanged(String value) {
+    if (value.length >= 3) {
+      if (_searchInCity && _cityCtrl.text.trim().isNotEmpty) {
+        print('📍 Поиск в городе: "$value" в "${_cityCtrl.text.trim()}"');
+        context.read<GeocodingCubit>().searchAddressesInCity(
+              value,
+              _cityCtrl.text.trim(),
+            );
+      } else {
+        print('🔍 Обычный поиск: "$value"');
+        context.read<GeocodingCubit>().searchAddresses(value);
+      }
+    } else {
+      context.read<GeocodingCubit>().clearSuggestions();
+    }
+  }
+
+  void _onCityChanged(String value) {
+    if (_searchInCity && _addressCtrl.text.length >= 3 && value.trim().isNotEmpty) {
+      context.read<GeocodingCubit>().searchAddressesInCity(
+            _addressCtrl.text,
+            value.trim(),
+          );
+    }
+  }
+
+  Future<void> _geocodeAddress(String address) async {
+    if (address.trim().isEmpty) return;
+    await context.read<GeocodingCubit>().geocodeAddress(address);
+  }
+
+  Future<void> _save() async {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите название объявления')),
       );
       return;
+    }
+
+    if (_addressCtrl.text.trim().isNotEmpty) {
+      await _geocodeAddress(_addressCtrl.text.trim());
+      await Future.delayed(const Duration(milliseconds: 500));
+      final geocodingState = context.read<GeocodingCubit>().state;
+      _listingLat = geocodingState.latitude;
+      _listingLon = geocodingState.longitude;
+      
+      if (_listingLat != null && _listingLon != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Координаты получены: ${_listingLat!.toStringAsFixed(4)}, ${_listingLon!.toStringAsFixed(4)}')),
+        );
+      }
     }
 
     final authState = context.read<AuthCubit>().state;
@@ -91,16 +142,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
       createdAt: DateTime.now(),
     );
 
-    // Используем use case через Cubit (Clean Architecture)
     context.read<ListingsCubit>().addListing(listing);
-    
-    // Сохраняем состояние до обновления для проверки достижений
-    // Для обратной совместимости с EcoImpactCubit используем адаптер
+
     final item = ItemAdapter.toItem(listing);
     final impactStateBefore = context.read<EcoImpactCubit>().state;
     context.read<EcoImpactCubit>().recalcImpactOnAdd(item);
-    
-    // Проверяем новые достижения после обновления
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final impactStateAfter = context.read<EcoImpactCubit>().state;
       final newAchievements = impactStateAfter.achievements
@@ -190,6 +237,162 @@ class _AddItemScreenState extends State<AddItemScreen> {
               ),
               maxLines: 4,
               style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            BlocBuilder<GeocodingCubit, GeocodingState>(
+              builder: (context, geocodingState) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _addressCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Адрес (опционально)',
+                        hintText: 'Введите адрес для геокодинга',
+                        prefixIcon: const Icon(Icons.location_on),
+                        suffixIcon: geocodingState.isSearching
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: _onAddressChanged,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    if (geocodingState.addressSuggestions.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: geocodingState.addressSuggestions.map((address) {
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.location_on, size: 20),
+                              title: Text(address, style: const TextStyle(fontSize: 14)),
+                              onTap: () {
+                                _addressCtrl.text = address;
+                                context.read<GeocodingCubit>().clearSuggestions();
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ] else if (geocodingState.isSearching) ...[
+                      const SizedBox(height: 8),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('Поиск адресов...', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _searchInCity,
+                          onChanged: (value) {
+                            setState(() {
+                              final wasEnabled = _searchInCity;
+                              _searchInCity = value ?? false;
+                              
+                              if (!_searchInCity) {
+                                _cityCtrl.clear();
+                                context.read<GeocodingCubit>().clearSuggestions();
+                                if (_addressCtrl.text.length >= 3) {
+                                  context.read<GeocodingCubit>().searchAddresses(_addressCtrl.text);
+                                }
+                              } else {
+                                print('✅ Поиск в городе включен');
+                                if (_addressCtrl.text.length >= 3 && _cityCtrl.text.trim().isNotEmpty) {
+                                  print('📍 Автоматический поиск: "${_addressCtrl.text}" в "${_cityCtrl.text.trim()}"');
+                                  context.read<GeocodingCubit>().searchAddressesInCity(
+                                        _addressCtrl.text,
+                                        _cityCtrl.text.trim(),
+                                      );
+                                } else if (_addressCtrl.text.length >= 3) {
+                                  print('⚠️ Город не указан, очищаем результаты');
+                                  context.read<GeocodingCubit>().clearSuggestions();
+                                }
+                              }
+                            });
+                          },
+                        ),
+                        const Expanded(
+                          child: Text('Искать адреса в конкретном городе'),
+                        ),
+                      ],
+                    ),
+                    if (_searchInCity) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Введите город, затем адрес для поиска в этом городе',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.blue.shade900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _cityCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Город',
+                          hintText: 'Например: Москва',
+                          prefixIcon: const Icon(Icons.location_city),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onChanged: _onCityChanged,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
             Text(
@@ -353,5 +556,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _addressCtrl.dispose();
+    _cityCtrl.dispose();
+    super.dispose();
   }
 }

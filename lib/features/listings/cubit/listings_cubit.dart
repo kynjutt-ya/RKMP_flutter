@@ -39,7 +39,15 @@ class ListingsCubit extends Cubit<ListingsState> {
     emit(state.copyWith(isLoading: true));
     try {
       print('🔄 Загрузка объявлений из БД...');
+      print('🔄 Начало загрузки объявлений из БД...');
       final listings = await getAllListingsUseCase();
+      print('📖 Загружено объявлений из БД: ${listings.length}');
+      for (var i = 0; i < listings.length && i < 5; i++) {
+        print('  - ${listings[i].id}: ${listings[i].title}');
+      }
+      if (listings.length > 5) {
+        print('  ... и еще ${listings.length - 5} объявлений');
+      }
       print('✅ Загружено ${listings.length} объявлений');
       emit(state.copyWith(
         allItems: listings,
@@ -58,8 +66,9 @@ class ListingsCubit extends Cubit<ListingsState> {
   Future<void> loadMyListings() async {
     try {
       final currentUserId = _getCurrentUserId();
-      if (currentUserId == null || currentUserId.isEmpty) {
-        print('⚠️ Не удалось определить ID пользователя для загрузки моих объявлений');
+      if (currentUserId.isEmpty) {
+        // Это нормально, если пользователь не залогинен - просто не загружаем его объявления
+        // Не логируем как ошибку, так как это ожидаемое поведение
         emit(state.copyWith(myItems: []));
         return;
       }
@@ -207,7 +216,10 @@ class ListingsCubit extends Cubit<ListingsState> {
 
   String _getCurrentUserId() {
     if (authCubit != null && authCubit!.state.isAuthenticated) {
-      return authCubit!.state.userEmail ?? '';
+      final email = authCubit!.state.userEmail;
+      if (email != null && email.isNotEmpty) {
+        return email;
+      }
     }
     return '';
   }

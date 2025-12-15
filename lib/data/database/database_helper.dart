@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -16,9 +17,31 @@ class DatabaseHelper {
 
   Future<Database> _initDB(String filePath) async {
     try {
-      final dbPath = await getDatabasesPath();
-      final path = join(dbPath, filePath);
+      String path;
+      
+      if (kIsWeb) {
+        // Для веб-платформы используем просто имя файла
+        // sqflite_common_ffi_web автоматически использует IndexedDB
+        path = filePath;
+        
+        // Проверяем, что databaseFactory установлен
+        if (databaseFactory.runtimeType.toString().contains('SqfliteDatabaseFactoryImpl')) {
+          print('✅ databaseFactory установлен для веб: ${databaseFactory.runtimeType}');
+        } else {
+          print('⚠️ databaseFactory может быть не установлен правильно: ${databaseFactory.runtimeType}');
+        }
+      } else {
+        // Для мобильных платформ используем полный путь
+        final dbPath = await getDatabasesPath();
+        path = join(dbPath, filePath);
+      }
 
+      print('📁 Путь к БД: $path (веб: $kIsWeb)');
+      print('📁 databaseFactory: ${databaseFactory.runtimeType}');
+
+      // openDatabase автоматически использует глобальный databaseFactory
+      // который установлен в main.dart для веб-платформы
+      print('🔄 Попытка открыть БД...');
       final db = await openDatabase(
         path,
         version: 1,
@@ -33,6 +56,11 @@ class DatabaseHelper {
     } catch (e, stackTrace) {
       print('❌ Ошибка при открытии БД: $e');
       print('Stack trace: $stackTrace');
+      // Для веб-платформы не прерываем выполнение, чтобы приложение могло работать
+      if (kIsWeb) {
+        print('⚠️ Продолжаем работу без БД на веб-платформе');
+        rethrow;
+      }
       rethrow;
     }
   }

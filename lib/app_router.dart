@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/eco_guide/screens/eco_tips_screen.dart' show EcoTipsScreen, RecyclingGuideScreen, RecyclingMapScreen;
+import 'features/eco_guide/screens/eco_guide_screen.dart';
 import 'features/eco_impact/screens/impact_dashboard_screen.dart';
 import 'features/eco_impact/screens/achievements_screen.dart';
 import 'features/listings/models/item.dart';
@@ -121,6 +122,10 @@ class AppRouter {
           GoRoute(
             path: 'map',
             builder: (context, state) => const RecyclingMapScreen(),
+          ),
+          GoRoute(
+            path: 'wikipedia',
+            builder: (context, state) => const EcoGuideScreen(),
           ),
         ],
       ),

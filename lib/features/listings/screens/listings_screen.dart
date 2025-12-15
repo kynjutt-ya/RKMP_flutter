@@ -7,6 +7,7 @@ import '../../../shared/item_adapter.dart';
 import '../models/item.dart';
 import '../widgets/item_table.dart';
 import '../../auth/cubit/auth_cubit.dart';
+import '../cubit/geocoding_cubit.dart';
 
 class ListingsScreen extends StatelessWidget {
   const ListingsScreen({super.key});
@@ -221,6 +222,22 @@ class _ListingsScreenContent extends StatelessWidget {
             onPressed: () => context.go('/support'),
               color: Colors.blue[600]!,
             ),
+            const SizedBox(width: 8),
+            _buildNavButton(
+              context,
+              icon: Icons.recycling,
+              label: 'Пункты приема',
+              onPressed: () => _showObjectsByTypeDialog(context),
+              color: Colors.green[700]!,
+            ),
+            const SizedBox(width: 8),
+            _buildNavButton(
+              context,
+              icon: Icons.public,
+              label: 'Адреса',
+              onPressed: () => _showSearchByCountryDialog(context),
+              color: Colors.purple[600]!,
+            ),
           ],
         ),
       ),
@@ -420,6 +437,317 @@ class _ListingsScreenContent extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  void _showObjectsByTypeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider.value(
+        value: context.read<GeocodingCubit>(),
+        child: const _ObjectsByTypeDialog(),
+      ),
+    );
+  }
+
+  void _showSearchByCountryDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => BlocProvider.value(
+        value: context.read<GeocodingCubit>(),
+        child: const _SearchByCountryDialog(),
+      ),
+    );
+  }
+}
+
+class _ObjectsByTypeDialog extends StatefulWidget {
+  const _ObjectsByTypeDialog();
+
+  @override
+  State<_ObjectsByTypeDialog> createState() => _ObjectsByTypeDialogState();
+}
+
+class _ObjectsByTypeDialogState extends State<_ObjectsByTypeDialog> {
+  final _objectTypeController = TextEditingController();
+  final _locationController = TextEditingController();
+  List<String> _addressSuggestions = [];
+  String? _error;
+  bool _isSearching = false;
+
+  @override
+  void dispose() {
+    _objectTypeController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<GeocodingCubit, GeocodingState>(
+      listener: (context, state) {
+        setState(() {
+          _addressSuggestions = state.addressSuggestions;
+          _error = state.error;
+          _isSearching = state.isSearching;
+        });
+      },
+      child: AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.recycling, color: Colors.green),
+            SizedBox(width: 8),
+            Text('Поиск пунктов приема'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _objectTypeController,
+                decoration: const InputDecoration(
+                  labelText: 'Тип объекта',
+                  hintText: 'Например: магазин, переработка, пункт приема',
+                  helperText: 'Можно вводить на русском: магазин, переработка, пункт приема, ремонт',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Город',
+                  hintText: 'Например: Москва',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.location_city),
+                ),
+              ),
+              if (_addressSuggestions.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Найденные объекты:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _addressSuggestions.map((address) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.place, color: Colors.green),
+                            title: Text(address),
+                            dense: true,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Card(
+                  color: Colors.red.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      'Ошибка: $_error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Закрыть'),
+          ),
+          ElevatedButton.icon(
+            onPressed: _isSearching
+                ? null
+                : () {
+                    if (_objectTypeController.text.trim().isNotEmpty &&
+                        _locationController.text.trim().isNotEmpty) {
+                      context.read<GeocodingCubit>().searchObjectsByType(
+                            _objectTypeController.text.trim(),
+                            _locationController.text.trim(),
+                          );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Введите тип объекта и город'),
+                        ),
+                      );
+                    }
+                  },
+            icon: _isSearching
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.search),
+            label: Text(_isSearching ? 'Поиск...' : 'Найти'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchByCountryDialog extends StatefulWidget {
+  const _SearchByCountryDialog();
+
+  @override
+  State<_SearchByCountryDialog> createState() => _SearchByCountryDialogState();
+}
+
+class _SearchByCountryDialogState extends State<_SearchByCountryDialog> {
+  final _queryController = TextEditingController();
+  final _countryController = TextEditingController();
+  List<String> _addressSuggestions = [];
+  String? _error;
+  bool _isSearching = false;
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    _countryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<GeocodingCubit, GeocodingState>(
+      listener: (context, state) {
+        setState(() {
+          _addressSuggestions = state.addressSuggestions;
+          _error = state.error;
+          _isSearching = state.isSearching;
+        });
+      },
+      child: AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.public, color: Colors.purple),
+            SizedBox(width: 8),
+            Text('Поиск адресов в стране'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _queryController,
+                decoration: const InputDecoration(
+                  labelText: 'Запрос',
+                  hintText: 'Например: улица, площадь',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _countryController,
+                decoration: const InputDecoration(
+                  labelText: 'Страна',
+                  hintText: 'Например: Россия',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.flag),
+                ),
+              ),
+              if (_addressSuggestions.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Найденные адреса:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _addressSuggestions.map((address) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.location_on, color: Colors.purple),
+                            title: Text(address),
+                            dense: true,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Card(
+                  color: Colors.red.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      'Ошибка: $_error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Закрыть'),
+          ),
+          ElevatedButton.icon(
+            onPressed: _isSearching
+                ? null
+                : () {
+                    if (_queryController.text.trim().isNotEmpty &&
+                        _countryController.text.trim().isNotEmpty) {
+                      context.read<GeocodingCubit>().searchAddressesByCountry(
+                            _queryController.text.trim(),
+                            _countryController.text.trim(),
+                          );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Введите запрос и страну'),
+                        ),
+                      );
+                    }
+                  },
+            icon: _isSearching
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.search),
+            label: Text(_isSearching ? 'Поиск...' : 'Найти'),
+          ),
+        ],
+      ),
     );
   }
 }

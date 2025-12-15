@@ -1,5 +1,6 @@
 // lib/features/repair_upcycle/cubit/repair_cubit.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../domain/interfaces/repositories/repair_repository.dart';
 import '../models/repair_service.dart';
 
 class RepairRequest {
@@ -27,7 +28,11 @@ class RepairRequest {
 }
 
 class RepairCubit extends Cubit<RepairState> {
-  RepairCubit() : super(const RepairState()) {
+  final RepairRepository? repository;
+
+  RepairCubit({
+    this.repository,
+  }) : super(const RepairState()) {
     _initializeServices();
   }
 
@@ -72,6 +77,7 @@ class RepairCubit extends Cubit<RepairState> {
   void setSelectedService(RepairService? service) {
     emit(state.copyWith(selectedService: service));
   }
+
 
   void loadServices({String? location, String? category}) {
     // Фильтрация по категории
@@ -152,6 +158,8 @@ class RepairState {
   final RepairService? selectedService;
   final List<RepairRequest> requests;
   final String? selectedCategory;
+  final bool isLoading;
+  final String? error;
 
   const RepairState({
     this.allServices = const [],
@@ -159,6 +167,8 @@ class RepairState {
     this.selectedService,
     this.requests = const [],
     this.selectedCategory,
+    this.isLoading = false,
+    this.error,
   });
 
   RepairState copyWith({
@@ -167,6 +177,8 @@ class RepairState {
     RepairService? selectedService,
     List<RepairRequest>? requests,
     String? selectedCategory,
+    bool? isLoading,
+    String? error,
   }) {
     return RepairState(
       allServices: allServices ?? this.allServices,
@@ -174,6 +186,8 @@ class RepairState {
       selectedService: selectedService ?? this.selectedService,
       requests: requests ?? this.requests,
       selectedCategory: selectedCategory ?? this.selectedCategory,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
   }
 }

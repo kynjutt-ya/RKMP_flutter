@@ -8,8 +8,22 @@ import '../cubit/eco_guide_cubit.dart';
 // lib/features/eco_guide/screens/recycling_guide_screen.dart
 // lib/features/eco_guide/screens/recycling_map_screen.dart
 
-class EcoTipsScreen extends StatelessWidget {
+class EcoTipsScreen extends StatefulWidget {
   const EcoTipsScreen({super.key});
+
+  @override
+  State<EcoTipsScreen> createState() => _EcoTipsScreenState();
+}
+
+class _EcoTipsScreenState extends State<EcoTipsScreen> {
+  final _searchController = TextEditingController();
+  bool _showWikipediaResults = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,28 +47,223 @@ class EcoTipsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<EcoGuideCubit, EcoGuideState>(
-        builder: (context, state) {
-          if (state.tipsList.isEmpty) {
-            return const Center(
-              child: Text('Советы загружаются...'),
-    );
-  }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.tipsList.length,
-            itemBuilder: (context, index) {
-              final tip = state.tipsList[index];
-              return _buildTipCard(tip);
-            },
-          );
+      body: BlocListener<EcoGuideCubit, EcoGuideState>(
+        listener: (context, state) {
+          if (state.tipsList.isNotEmpty && _searchController.text.isNotEmpty) {
+            setState(() {
+              _showWikipediaResults = true;
+            });
+          }
         },
+        child: BlocBuilder<EcoGuideCubit, EcoGuideState>(
+          builder: (context, state) {
+            return Column(
+              children: [
+                Card(
+                  margin: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.search, color: Colors.green),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Поиск информации об экологии',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Например: переработка отходов, экология',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.article),
+                                ),
+                                onSubmitted: (query) {
+                                  if (query.isNotEmpty) {
+                                    context.read<EcoGuideCubit>().searchWikipediaArticles(
+                                          query,
+                                          limit: 5,
+                                        );
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: state.isLoading
+                                  ? null
+                                  : () {
+                                      if (_searchController.text.isNotEmpty) {
+                                        context.read<EcoGuideCubit>().searchWikipediaArticles(
+                                              _searchController.text,
+                                              limit: 5,
+                                            );
+                                      }
+                                    },
+                              icon: state.isLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.search),
+                              label: const Text('Найти'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Результаты поиска Wikipedia или обычные советы
+                Expanded(
+                  child: _showWikipediaResults && state.tipsList.isNotEmpty
+                      ? _buildWikipediaResults(context, state)
+                      : state.tipsList.isEmpty
+                          ? const Center(
+                              child: Text('Советы загружаются...'),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: state.tipsList.length,
+                              itemBuilder: (context, index) {
+                                final tip = state.tipsList[index];
+                                return _buildTipCard(tip, context);
+                              },
+                            ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildTipCard(EcoTip tip) {
+  Widget _buildWikipediaResults(BuildContext context, EcoGuideState state) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: state.tipsList.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Card(
+            color: Colors.green[50],
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.article, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Найдено ${state.tipsList.length} статей из Wikipedia',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showWikipediaResults = false;
+                        _searchController.clear();
+                      });
+                    },
+                    child: const Text('Показать советы'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final tip = state.tipsList[index - 1];
+        return _buildWikipediaCard(tip, context);
+      },
+    );
+  }
+
+  Widget _buildWikipediaCard(EcoTip tip, BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      child: InkWell(
+        onTap: () {
+          // Запрос 2: getPageContent - получение содержимого статьи
+          context.read<EcoGuideCubit>().getWikipediaPageContent(tip.title);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.article, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      tip.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.link),
+                    tooltip: 'Связанные статьи',
+                    onPressed: () {
+                      // Запрос 4: getPageLinks - получение связанных статей
+                      context.read<EcoGuideCubit>().getWikipediaPageLinks(
+                            tip.title,
+                            limit: 10,
+                          );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                tip.content,
+                style: const TextStyle(fontSize: 14, height: 1.5),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Нажмите, чтобы прочитать статью полностью',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTipCard(EcoTip tip, BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -218,6 +427,20 @@ class RecyclingGuideScreen extends StatelessWidget {
                     child: InkWell(
                       onTap: () {
                         context.read<EcoGuideCubit>().setCategory(category);
+                        // Запрос 5: getPageImages - получение изображений статьи при выборе категории
+                        final categoryMap = {
+                          'furniture': 'Мебель',
+                          'electronics': 'Электроника',
+                          'clothing': 'Одежда',
+                          'plastic': 'Пластик',
+                          'batteries': 'Батарейки',
+                          'paper': 'Бумага',
+                        };
+                        final categoryName = categoryMap[category] ?? 'Экология';
+                        context.read<EcoGuideCubit>().getWikipediaPageImages(
+                              categoryName,
+                              limit: 5,
+                            );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -249,7 +472,7 @@ class RecyclingGuideScreen extends StatelessWidget {
                 }),
                 if (state.selectedCategory.isNotEmpty) ...[
                   const SizedBox(height: 32),
-                  _buildGuideSteps(state.selectedCategory),
+                  _buildGuideSteps(state.selectedCategory, context, state),
                 ],
               ],
             ),
@@ -259,7 +482,7 @@ class RecyclingGuideScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGuideSteps(String category) {
+  Widget _buildGuideSteps(String category, BuildContext context, EcoGuideState state) {
     final guide = categoryGuides[category];
     if (guide == null) return const SizedBox.shrink();
 
@@ -280,15 +503,53 @@ class RecyclingGuideScreen extends StatelessWidget {
                   color: Colors.green,
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  guide['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    guide['title'] as String,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
+            // Изображения из Wikipedia (запрос 5: getPageImages)
+            if (state.tipsList.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Изображения:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: state.tipsList.length,
+                  itemBuilder: (context, index) {
+                    final tip = state.tipsList[index];
+                    if (tip.imageUrl == null) return const SizedBox.shrink();
+                    return Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          tip.imageUrl!,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             const Text(
               'Шаги по переработке:',

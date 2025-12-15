@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../listings/cubit/listings_cubit.dart';
 import '../../../shared/item_adapter.dart';
-import '../../listings/models/item.dart';
 import '../../listings/widgets/item_table.dart';
 import '../cubit/profile_cubit.dart';
 

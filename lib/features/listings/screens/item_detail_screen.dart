@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/item.dart';
+import '../cubit/geocoding_cubit.dart';
 import '../../profile/cubit/profile_cubit.dart';
+import '../../eco_guide/cubit/eco_guide_cubit.dart';
 import '../../../shared/image_helper.dart';
 
 class ItemDetailScreen extends StatelessWidget {
@@ -11,7 +13,6 @@ class ItemDetailScreen extends StatelessWidget {
   const ItemDetailScreen({super.key, required this.item});
 
   Widget _buildImage(String? url, String? path, Uint8List? bytes) {
-    // Приоритет: imageUrl > imageBytes > imagePath
     if (url != null && (url.startsWith('http://') || url.startsWith('https://'))) {
       return CachedNetworkImage(
         imageUrl: url,
@@ -265,6 +266,83 @@ class ItemDetailScreen extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  BlocBuilder<EcoGuideCubit, EcoGuideState>(
+                    builder: (context, ecoState) {
+                      return ExpansionTile(
+                        leading: const Icon(Icons.eco, color: Colors.green),
+                        title: const Text(
+                          'Информация об экологии',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text('Статьи из Wikipedia о переработке'),
+                        onExpansionChanged: (expanded) {
+                          if (expanded && ecoState.tipsList.isEmpty) {
+                            final categoryMap = {
+                              'electronics': 'Электроника',
+                              'clothing': 'Одежда',
+                              'furniture': 'Мебель',
+                              'books': 'Книги',
+                              'toys': 'Игрушки',
+                              'kitchen': 'Кухня',
+                            };
+                            final categoryName = categoryMap[item.category] ?? 'Экология';
+                            context.read<EcoGuideCubit>().getWikipediaCategoryArticles(
+                                  categoryName,
+                                  limit: 5,
+                                );
+                          }
+                        },
+                        children: [
+                          if (ecoState.isLoading)
+                            const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else if (ecoState.error != null)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'Ошибка: ${ecoState.error}',
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            )
+                          else if (ecoState.tipsList.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('Нажмите, чтобы загрузить информацию'),
+                            )
+                          else
+                            ...ecoState.tipsList.map((tip) {
+                              return ListTile(
+                                leading: const Icon(Icons.article, color: Colors.blue),
+                                title: Text(tip.title),
+                                subtitle: Text(
+                                  tip.content,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.link),
+                                  tooltip: 'Связанные статьи',
+                                  onPressed: () {
+                                    // Запрос 4: getPageLinks - получение связанных статей
+                                    context.read<EcoGuideCubit>().getWikipediaPageLinks(
+                                          tip.title,
+                                          limit: 10,
+                                        );
+                                  },
+                                ),
+                                onTap: () {
+                                  // Запрос 2: getPageContent - получение содержимого статьи
+                                  context.read<EcoGuideCubit>().getWikipediaPageContent(tip.title);
+                                },
+                              );
+                            }).toList(),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   SizedBox(

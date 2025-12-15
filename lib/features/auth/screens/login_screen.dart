@@ -31,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     final email = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text.trim();
     final name = _nameCtrl.text.trim();
 
     // Симуляция задержки для реалистичности

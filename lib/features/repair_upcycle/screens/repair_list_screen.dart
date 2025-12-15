@@ -36,7 +36,7 @@ class RepairListScreen extends StatelessWidget {
         ),
       body: BlocBuilder<RepairCubit, RepairState>(
         builder: (context, state) {
-          if (state.allServices.isEmpty) {
+          if (state.allServices.isEmpty && !state.isLoading) {
             return const Center(
               child: Text('Сервисы загружаются...'),
             );

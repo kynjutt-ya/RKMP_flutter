@@ -4,16 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../cubit/listings_cubit.dart';
 import '../../../shared/item_adapter.dart';
 import '../widgets/item_table.dart';
-import '../../auth/cubit/auth_cubit.dart';
 
 class MyListingsScreen extends StatelessWidget {
   const MyListingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authState = context.read<AuthCubit>().state;
-    final ownerName = authState.userName ?? 'Пользователь';
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Мои объявления'),
