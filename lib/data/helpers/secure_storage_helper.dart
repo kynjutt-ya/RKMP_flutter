@@ -39,42 +39,6 @@ class SecureStorageHelper {
     return _storage;
   }
 
-  Future<void> saveUserLogin(String login) async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      await prefs.setString('user_login', login);
-    } else {
-      await storage?.write(key: 'user_login', value: login);
-    }
-  }
-
-  Future<String?> getUserLogin() async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      return prefs.getString('user_login');
-    } else {
-      return await storage?.read(key: 'user_login');
-    }
-  }
-
-  Future<void> saveUserPassword(String password) async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      await prefs.setString('user_password', password);
-    } else {
-      await storage?.write(key: 'user_password', value: password);
-    }
-  }
-
-  Future<String?> getUserPassword() async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      return prefs.getString('user_password');
-    } else {
-      return await storage?.read(key: 'user_password');
-    }
-  }
-
   Future<void> saveAuthToken(String token) async {
     if (kIsWeb) {
       final prefs = await _webPrefs;
@@ -111,24 +75,6 @@ class SecureStorageHelper {
     }
   }
 
-  Future<void> deleteUserLogin() async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      await prefs.remove('user_login');
-    } else {
-      await storage?.delete(key: 'user_login');
-    }
-  }
-
-  Future<void> deleteUserPassword() async {
-    if (kIsWeb) {
-      final prefs = await _webPrefs;
-      await prefs.remove('user_password');
-    } else {
-      await storage?.delete(key: 'user_password');
-    }
-  }
-
   Future<void> deleteAuthToken() async {
     if (kIsWeb) {
       final prefs = await _webPrefs;
@@ -150,8 +96,6 @@ class SecureStorageHelper {
   Future<void> clearAll() async {
     if (kIsWeb) {
       final prefs = await _webPrefs;
-      await prefs.remove('user_login');
-      await prefs.remove('user_password');
       await prefs.remove('auth_token');
       await prefs.remove('refresh_token');
     } else {
